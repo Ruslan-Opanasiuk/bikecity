@@ -218,16 +218,18 @@ export function getMinimalFontSizeAcrossB4Items(items) {
   return Math.min(...fontSizes);
 }
 
-// === [5] ВИЗНАЧЕННЯ ВИРІВНЯНОГО textX, ЯКЩО РІЗНИЦЯ < 20px ===
 export function getAlignedTextX(items) {
   const textXs = items.map((params) => {
-    const layout = computeB4TextLayout(params);
+    // Усунь вплив alignedTextX при обчисленні
+    const { alignedTextX, ...paramsWithoutAligned } = params;
+
+    const layout = computeB4TextLayout(paramsWithoutAligned);
     return layout.textX;
   });
 
   const max = Math.max(...textXs);
   const min = Math.min(...textXs);
 
-  if (max - min <= 20) return max;
+  if (max - min <= 22) return max;
   return null;
 }
