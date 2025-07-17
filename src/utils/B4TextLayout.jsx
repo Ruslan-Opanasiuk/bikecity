@@ -8,7 +8,7 @@ import { getRouteBadgeGroupWidth } from "../components/svg/RouteBadgeGroup";
 const BASE_FONT_SIZE_PRIMARY = 38;
 const BASE_FONT_SIZE_SECONDARY = 20;
 const FONT_VISUAL_HEIGHT_COEFF = 96 / 76;
-const DIAGONAL_ARROW_WIDTH = 65.4;
+const DIAGONAL_ARROW_WIDTH = 55.4;
 
 // === [1] АДАПТИВНЕ ЗМЕНШЕННЯ ШРИФТУ ДО ШИРИНИ ===
 function scaleFontToFit(text, font, maxWidth, baseSize, minRatio = 0.8) {
@@ -29,7 +29,6 @@ function splitText(text) {
 
 // === [3] ОСНОВНА ФУНКЦІЯ РОЗРАХУНКУ ЛЕЯУТУ ТЕКСТУ ===
 export function computeB4TextLayout(params) {
-  // === [3.1] ПІДГОТОВКА ТЕКСТУ ===
   const mainKey = params.mainText;
   const subText = params.subText || "";
   const translit = subText ? transliterate(subText) : "";
@@ -56,7 +55,7 @@ export function computeB4TextLayout(params) {
     secondaryLine = [translit, labelEn].filter(Boolean).join(" ");
   }
 
-  // === [3.2] ОБЧИСЛЕННЯ X-ПОЗИЦІЇ ТЕКСТУ ===
+  // === [3.2] Позиція X ===
   const xPadding = 40;
   const arrow = PathConfigs.smallArrow;
 
@@ -74,7 +73,7 @@ export function computeB4TextLayout(params) {
     "straight-left": {
       rotation: -45,
       arrowX: xPadding - 3,
-      iconX: xPadding + DIAGONAL_ARROW_WIDTH + 20,
+      iconX: xPadding - 3 + DIAGONAL_ARROW_WIDTH + 20,
     },
     right: {
       rotation: 90,
@@ -83,7 +82,7 @@ export function computeB4TextLayout(params) {
     },
     "straight-right": {
       rotation: 45,
-      arrowX: 560 + 3 - arrow.width,
+      arrowX: 560 + 3 - DIAGONAL_ARROW_WIDTH,
       iconX: xPadding,
     },
   };
@@ -122,18 +121,18 @@ export function computeB4TextLayout(params) {
 
   const originalTextX = textX;
 
-  // === [3.3] ВРАХУВАННЯ ВИРІВНЮВАННЯ textX ===
+  // === [3.3] Вирівнювання textX (якщо задано) ===
   if (typeof params.alignedTextX === "number") {
     textX = params.alignedTextX;
   }
   const textXShift = textX - originalTextX;
 
-  // === [3.4] ДОСТУПНА ШИРИНА ТЕКСТУ ===
+  // === [3.4] Ширини для розрахунків ===
   const baseFontSize1 = BASE_FONT_SIZE_PRIMARY / 0.7;
   const baseFontSize2 = BASE_FONT_SIZE_SECONDARY / 0.7;
 
   const arrowRightSpace = ["right", "straight-right"].includes(params.direction)
-    ? ((params.direction === "right" ? arrow.height : DIAGONAL_ARROW_WIDTH) + 20)
+    ? (params.direction === "right" ? arrow.height : DIAGONAL_ARROW_WIDTH) + 20
     : 0;
 
   const badgeGroupWidth = getRouteBadgeGroupWidth(params);
@@ -144,7 +143,7 @@ export function computeB4TextLayout(params) {
   const availableTextWidthSecondary =
     520 - (originalTextX - xPadding) - textXShift - arrowRightSpace;
 
-  // === [3.5] ПІДГАНЯЄМО РОЗМІР ШРИФТУ І РЯДКИ ===
+  // === [3.5] Основний текст: розрахунок розміру та рядків ===
   let mainTextLines;
   let fontSize1;
 
@@ -155,19 +154,22 @@ export function computeB4TextLayout(params) {
     fontFamilyBold,
     availableTextWidthMain,
     baseFontSize1,
-    0
+    0.7
   );
 
   if (singleLineRatio >= 0.8) {
     mainTextLines = [mainTextLineRaw];
-    fontSize1 = params.forcedFontSize1 ?? (baseFontSize1 * Math.min(singleLineRatio, 1));
+    fontSize1 = params.forcedFontSize1 ?? baseFontSize1 * Math.min(singleLineRatio, 1);
   } else {
     mainTextLines = splitText(mainTextLineRaw);
+
     const adjustedRatio = Math.min(
-      scaleFontToFit(mainTextLines[0], fontFamilyBold, availableTextWidthMain, baseFontSize1, 0).ratio,
-      scaleFontToFit(mainTextLines[1], fontFamilyBold, availableTextWidthMain, baseFontSize1, 0).ratio
+      scaleFontToFit(mainTextLines[0], fontFamilyBold, availableTextWidthMain, baseFontSize1, 0.7).ratio,
+      scaleFontToFit(mainTextLines[1], fontFamilyBold, availableTextWidthMain, baseFontSize1, 0.7).ratio
     );
-    fontSize1 = params.forcedFontSize1 ?? (baseFontSize1 * Math.min(0.8, Math.max(adjustedRatio, 0.7)));
+
+    fontSize1 = params.forcedFontSize1 ??
+      baseFontSize1 * Math.min(0.8, Math.max(adjustedRatio, 0.7));
   }
 
   const { size: fontSize2 } = scaleFontToFit(
@@ -177,14 +179,14 @@ export function computeB4TextLayout(params) {
     baseFontSize2
   );
 
-  // === [3.6] ВИЗНАЧЕННЯ ПОЗИЦІЇ ДЛЯ БЕЙДЖУ ===
+  // === [3.6] Додаткові координати ===
   const measuredLines = mainTextLines.map(line =>
     measureText(line, `${fontSize1}px RoadUA-Bold`)
   );
   const maxTextWidth = Math.max(...measuredLines.map(m => m.width));
   const routeBadgeX = textX + maxTextWidth + 20;
 
-  // === [3.7] ХВИЛІ ДЛЯ ВОДНОГО МАРШРУТУ ===
+  // === [3.7] Хвильки ===
   const showWave = params.icon === "water";
   const waves = PathConfigs.waves;
   const waveWidth = waves.width * waves.scale;
@@ -221,9 +223,7 @@ export function getMinimalFontSizeAcrossB4Items(items) {
   return Math.min(...fontSizes);
 }
 
-/**
- * Повертає Map<індекс, вирівняне textX> лише для тих напрямків, які можуть бути вирівняні.
- */
+// === [5] ВИРІВНЮВАННЯ ПО textX ДЛЯ ГРУП ===
 export function getAlignedTextXMap(items) {
   const textXList = items.map((params, i) => {
     const { alignedTextX, ...cleanParams } = params;
@@ -233,7 +233,6 @@ export function getAlignedTextXMap(items) {
 
   const groups = [];
 
-  // Групування елементів з близькими textX (±20px)
   for (let i = 0; i < textXList.length; i++) {
     const base = textXList[i];
     let group = [base];
@@ -245,7 +244,6 @@ export function getAlignedTextXMap(items) {
       }
     }
 
-    // Якщо група має більше 1 елементу — зберігаємо
     if (group.length > 1) {
       const existing = groups.flatMap(g => g.map(item => item.index));
       const newGroup = group.filter(g => !existing.includes(g.index));
@@ -255,7 +253,6 @@ export function getAlignedTextXMap(items) {
     }
   }
 
-  // Створення мапи вирівнювань
   const result = new Map();
 
   for (const group of groups) {

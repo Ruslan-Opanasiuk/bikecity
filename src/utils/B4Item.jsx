@@ -10,8 +10,8 @@ import boldData from "../utils/export/RoadUA-Bold.ttf.base64?raw";
 import mediumData from "../utils/export/RoadUA-Medium.ttf.base64?raw";
 
 // === [0] Завантаження шрифтів ===
-const boldBuf = Uint8Array.from(atob(boldData), c => c.charCodeAt(0)).buffer;
-const mediumBuf = Uint8Array.from(atob(mediumData), c => c.charCodeAt(0)).buffer;
+const boldBuf = Uint8Array.from(atob(boldData), (c) => c.charCodeAt(0)).buffer;
+const mediumBuf = Uint8Array.from(atob(mediumData), (c) => c.charCodeAt(0)).buffer;
 
 const roadUABold = opentype.parse(boldBuf);
 const roadUAMedium = opentype.parse(mediumBuf);
@@ -19,6 +19,7 @@ const roadUAMedium = opentype.parse(mediumBuf);
 const BASE_FONT_SIZE_PRIMARY = 38;
 const BASE_FONT_SIZE_SECONDARY = 20;
 const FONT_VISUAL_HEIGHT_COEFF = 96 / 76;
+const DIAGONAL_ARROW_WIDTH = 55.4;
 
 function B4Item({
   params,
@@ -27,14 +28,13 @@ function B4Item({
   transform,
   isLast = false,
   index = 0,
-  contentOffsetY = 0, // 🆕 новий параметр для підйому контенту
+  contentOffsetY = 0,
 }) {
-  // === [1] Прапори ===
   const shouldShowTemporaryBg = params.isTemporaryRoute === true;
   const isEndRoute = params.direction === "end" && index === 0;
   const TEMP_COLOR = "#F5C30D";
 
-  // === [2] Іконка ===
+  // === [1] Іконка ===
   let iconKey = params.icon;
   if (iconKey === "streetNetwork" && params.isUrbanCenter) {
     iconKey = "cityCentre";
@@ -49,7 +49,7 @@ function B4Item({
   }
   const icon = iconKey && PathConfigs[iconKey];
 
-  // === [3] Стрілка та іконка: положення ===
+  // === [2] Стрілка та іконка: положення ===
   const xPadding = 40;
   const arrow = PathConfigs.smallArrow;
 
@@ -67,7 +67,7 @@ function B4Item({
     "straight-left": {
       rotation: -45,
       arrowX: xPadding - 3,
-      iconX: xPadding + 65.4 + 20,
+      iconX: xPadding - 3 + DIAGONAL_ARROW_WIDTH + 20,
     },
     right: {
       rotation: 90,
@@ -76,7 +76,7 @@ function B4Item({
     },
     "straight-right": {
       rotation: 45,
-      arrowX: 560 + 3 - arrow.width,
+      arrowX: 560 + 3 - DIAGONAL_ARROW_WIDTH,
       iconX: xPadding,
     },
   };
@@ -87,13 +87,13 @@ function B4Item({
   const iconX = layout.iconX || xPadding;
   const arrowY = 75 - arrow.height / 2;
 
-  // === [4] Текст та бейджі ===
+  // === [3] Текст та бейджі ===
   const {
     mainTextLines,
     secondaryLine,
     fontSize1,
     fontSize2,
-    textX: baseTextX,
+    textX,
     applyYShift,
     waveCount,
     waveWidth,
@@ -104,8 +104,7 @@ function B4Item({
     alignedTextX: params.alignedTextX || null,
   });
 
-  const textX = params.alignedTextX || baseTextX;
-
+  // === [4] Основний текст (2 рядки або 1) ===
   const mainTextPaths = useMemo(() => {
     return mainTextLines.map((line, i) => {
       const baselineY =
@@ -115,13 +114,6 @@ function B4Item({
           ? 35
           : 75;
 
-      const vAlign =
-        mainTextLines.length === 1
-          ? "visualX"
-          : i === 0
-          ? "visualx"
-          : "visualX";
-
       return textToPath(
         roadUABold,
         line,
@@ -129,15 +121,17 @@ function B4Item({
         textX,
         baselineY,
         "left",
-        vAlign
+        "visualX"
       );
     });
   }, [mainTextLines.join("|"), fontSize1, textX, applyYShift]);
 
+  // === [5] Другорядний текст (залежить від кількості рядків в основному) ===
   const secondaryPath = useMemo(() => {
     const baselineY =
       mainTextLines.length === 1
-        ? 115 - BASE_FONT_SIZE_SECONDARY * 0.5 -
+        ? 115 -
+          BASE_FONT_SIZE_SECONDARY * 0.5 -
           (BASE_FONT_SIZE_SECONDARY * (FONT_VISUAL_HEIGHT_COEFF - 1)) -
           applyYShift
         : 115;
@@ -149,15 +143,15 @@ function B4Item({
       textX,
       baselineY,
       "left",
-      mainTextLines.length === 1 ? "visualX" : "visualx"
+      "visualX"
     );
-  }, [secondaryLine, fontSize2, textX]);
+  }, [secondaryLine, fontSize2, textX, mainTextLines.length, applyYShift]);
 
-  // === [5] Рендер ===
+  // === [6] Рендер ===
   return (
     <g transform={transform || `translate(${x}, ${y})`}>
       {/* <rect x={40} y={35} width={520} height={80} fill={TEMP_COLOR} /> */}
-      {/* ⬛ Тимчасовий жовтий фон — НЕ піднімається */}
+      {/* 🟡 Тимчасовий жовтий фон — НЕ піднімається */}
       {shouldShowTemporaryBg &&
         (isLast ? (
           <path
@@ -169,7 +163,7 @@ function B4Item({
           <rect x={10} y={0} width={580} height={150} fill={TEMP_COLOR} />
         ))}
 
-      {/* Контент, що може бути піднятий (текст, стрілка, іконка, бейдж) */}
+      {/* Контент, що піднімається (стрілка, текст, бейдж, іконка) */}
       <g transform={`translate(0, ${contentOffsetY})`}>
         {/* 🔴 Кінець маршруту — червона смуга */}
         {isEndRoute && (
@@ -197,7 +191,7 @@ function B4Item({
           />
         ))}
 
-        {/* 🌐 Другорядний текст */}
+        {/* 🌐 Англійський текст */}
         <path
           d={secondaryPath}
           fill="black"
@@ -217,7 +211,7 @@ function B4Item({
           </g>
         )}
 
-        {/* 🧭 Іконка маршруту */}
+        {/* 🧭 Іконка */}
         {icon && (
           <g
             transform={`translate(
@@ -229,7 +223,7 @@ function B4Item({
           </g>
         )}
 
-        {/* 🌊 Хвильки — для водного маршруту */}
+        {/* 🌊 Хвильки */}
         {params.icon === "water" && (
           <g transform={`translate(${textX}, 108)`}>
             {Array.from({ length: waveCount }).map((_, i) => (
@@ -243,7 +237,7 @@ function B4Item({
           </g>
         )}
 
-        {/* 🏷️ Бейджі маршруту */}
+        {/* 🏷️ Бейджі */}
         <RouteBadgeGroup
           params={{
             ...params,

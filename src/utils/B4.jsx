@@ -55,34 +55,31 @@ function B4({ params }) {
     return lines;
   };
 
-  // === [6] Вирівнювання тексту (по textX) ===
+  // === [6] Вирівнювання тексту (по textX) + уніфікація шрифту ===
   let alignedTextXMap = new Map();
   let forcedFontSize1 = null;
 
   if (Array.isArray(params.b4Items)) {
-    const itemsWithMergedParams = params.b4Items.map((item) => ({
+    const baseParams = params.b4Items.map((item) => ({
       ...params,
       ...item,
     }));
 
-    alignedTextXMap = getAlignedTextXMap(itemsWithMergedParams);
+    alignedTextXMap = getAlignedTextXMap(baseParams);
 
-    // === [7] Уніфікація шрифту з урахуванням вирівнювання ===
     if (params.forceUniformTextSize) {
-      const itemsWithTextX = itemsWithMergedParams.map((item, index) => {
-        return {
-          ...item,
-          ...(alignedTextXMap.has(index)
-            ? { alignedTextX: alignedTextXMap.get(index) }
-            : {}),
-        };
-      });
+      const withAligned = baseParams.map((item, index) => ({
+        ...item,
+        ...(alignedTextXMap.has(index)
+          ? { alignedTextX: alignedTextXMap.get(index) }
+          : {}),
+      }));
 
-      forcedFontSize1 = getMinimalFontSizeAcrossB4Items(itemsWithTextX);
+      forcedFontSize1 = getMinimalFontSizeAcrossB4Items(withAligned);
     }
   }
 
-  // === [8] Рендер SVG таблички ===
+  // === [7] Рендер SVG таблички ===
   return (
     <svg
       width={outerRect.outerWidth + 2}
@@ -93,7 +90,7 @@ function B4({ params }) {
         transform="translate(1,1)"
         style={{ filter: "drop-shadow(0 0 1px black)" }}
       >
-        {/* === [8.1] Зовнішня біла рамка === */}
+        {/* === [7.1] Зовнішня біла рамка === */}
         <RectRenderer
           config={outerRect}
           outerColor="#FFFFFF"
@@ -102,7 +99,7 @@ function B4({ params }) {
           y={0}
         />
 
-        {/* === [8.2] Елементи напрямків (B4Item) === */}
+        {/* === [7.2] Елементи напрямків (B4Item) === */}
         {params.b4Items?.map((itemParams, index) => {
           const prev = index > 0 ? params.b4Items[index - 1] : null;
           const hideArrow = prev && prev.direction === itemParams.direction;
@@ -114,7 +111,7 @@ function B4({ params }) {
               key={index}
               index={index}
               x={0}
-              y={b4ItemY(index, false)} // Фон не зміщується
+              y={b4ItemY(index, false)} // фон залишається фіксованим
               isLast={isLast}
               contentOffsetY={contentOffsetY}
               params={{
@@ -131,7 +128,7 @@ function B4({ params }) {
           );
         })}
 
-        {/* === [8.3] Внутрішня чорна рамка === */}
+        {/* === [7.3] Внутрішня чорна рамка === */}
         <RectRenderer
           config={innerRect}
           outerColor="#000000"
@@ -140,13 +137,13 @@ function B4({ params }) {
           y={7}
         />
 
-        {/* === [8.4] Заголовок таблички (верхній блок) === */}
+        {/* === [7.4] Заголовок таблички (верхній блок) === */}
         <B4B7Header params={params} />
 
-        {/* === [8.5] Чорні роздільники між напрямками === */}
+        {/* === [7.5] Чорні роздільники між напрямками === */}
         {renderSeparatorLines()}
 
-        {/* === [8.6] Чорна смуга під заголовком (для тимчасових знаків) === */}
+        {/* === [7.6] Чорна смуга під заголовком (для тимчасових знаків) === */}
         {showBlackLine && (
           <rect x={10} y={197} width={580} height={6} fill="#000000" />
         )}
