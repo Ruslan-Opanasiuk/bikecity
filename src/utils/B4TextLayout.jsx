@@ -239,7 +239,7 @@ export function getAlignedTextXMap(items) {
 
     for (let j = i + 1; j < textXList.length; j++) {
       const next = textXList[j];
-      if (Math.abs(base.textX - next.textX) <= 20) {
+      if (Math.abs(base.textX - next.textX) <= 22) {
         group.push(next);
       }
     }
