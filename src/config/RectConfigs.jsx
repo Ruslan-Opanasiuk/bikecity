@@ -77,19 +77,19 @@ const RectConfigs = {
   strokeB4: {
     outerHeight: 336,
     outerWidth: 586,
-    outerRadius: 45,
+    outerRadius: 41,
     strokeWidth: 6
   },
   strokeB5: {
     outerHeight: 486,
     outerWidth: 586,
-    outerRadius: 45,
+    outerRadius: 41,
     strokeWidth: 6
   },
   strokeB6: {
     outerHeight: 636,
     outerWidth: 586,
-    outerRadius: 45,
+    outerRadius: 41,
     strokeWidth: 6
   }
 

@@ -17,8 +17,7 @@ function RectRenderer({config, outerColor, innerColor, x, y }) {
         fill={innerColor}
         stroke={outerColor}
         strokeWidth={strokeWidth}
-        rx={outerRadius}
-        ry={outerRadius}
+        rx={outerRadius-strokeWidth/2}
       />
     </g>
   );

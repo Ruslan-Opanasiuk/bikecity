@@ -47,8 +47,7 @@ function SignPreview({ signType, params, mode = "preview" }) {
           y={0}
           width={width + 2}
           height={height + 2}
-          rx={50}
-          ry={50}
+          rx={46}
           fill="#000000"
         />
         <g transform="translate(1,1)">{sign}</g>
