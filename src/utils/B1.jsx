@@ -63,11 +63,10 @@ function B1({ params }) {
 
   return (
     <svg
-      width={mainConfig.outerWidth + 2}
-      height={mainConfig.outerHeight + 2}
+      width={mainConfig.outerWidth}
+      height={mainConfig.outerHeight}
       xmlns="http://www.w3.org/2000/svg"
     >
-      <g transform="translate(1,1)" style={{ filter: "drop-shadow(0 0 1px black)" }}>
         {/* 1. Рамка */}
         <RectRenderer
           config={mainConfig}
@@ -122,7 +121,6 @@ function B1({ params }) {
         >
           <path d={PathConfigs.bigArrow.d} fill={colors.symbolColor} />
         </g>
-      </g>
     </svg>
   );
 }

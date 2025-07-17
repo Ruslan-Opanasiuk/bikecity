@@ -1,59 +1,69 @@
-// src/components/SignPreview.jsx
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import B1 from "../utils/B1";
 import B2 from "../utils/B2";
 import B3 from "../utils/B3";
 import B4 from "../utils/B4";
 
-// Імпортуємо base64-шрифти як рядки
-import mediumData from "../utils/export/RoadUA-Medium.ttf.base64?raw";
-import boldData   from "../utils/export/RoadUA-Bold.ttf.base64?raw";
+const components = { В1: B1, В2: B2, В3: B3, В4: B4 };
 
-function SignPreview({ signType, params }) {
-  const containerRef = useRef(null);
+function SignPreview({ signType, params, mode = "preview" }) {
+  const Component = components[signType];
+  const svgRef = useRef(null);
+  const [dimensions, setDimensions] = useState(null);
 
   useEffect(() => {
-    // 1) Medium (вага 500)
-    const faceMedium = new FontFace(
-      "RoadUA",
-      `url(data:font/ttf;base64,${mediumData}) format('truetype')`,
-      { weight: "500" }
-    );
-    document.fonts.add(faceMedium);
+    if (mode === "export" && svgRef.current) {
+      const svgEl = svgRef.current.querySelector("svg");
+      if (svgEl) {
+        const width = parseFloat(svgEl.getAttribute("width"));
+        const height = parseFloat(svgEl.getAttribute("height"));
+        if (!isNaN(width) && !isNaN(height)) {
+          setDimensions({ width, height });
+        }
+      }
+    }
+  }, [mode, signType, params]);
 
-    // 2) Bold (вага 700)
-    const faceBold = new FontFace(
-      "RoadUA",
-      `url(data:font/ttf;base64,${boldData}) format('truetype')`,
-      { weight: "700" }
-    );
-    document.fonts.add(faceBold);
+  if (!Component) {
+    return <div>Тут буде прев’ю {signType}</div>;
+  }
 
-    // Завантажуємо обидва
-    Promise.all([faceMedium.load(), faceBold.load()])
-      .then(() => {
-        console.log("✅ RoadUA fonts loaded (500 & 700)");
-      })
-      .catch((e) => {
-        console.error("❌ Помилка завантаження шрифту RoadUA:", e);
-      });
-  }, []);
+  const sign = <Component params={params} />;
+
+  if (mode === "export") {
+    if (!dimensions) {
+      return <div ref={svgRef}>{sign}</div>; // перший рендер — просто SVG
+    }
+
+    const { width, height } = dimensions;
+    return (
+      <svg
+        width={width + 2}
+        height={height + 2}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <rect
+          x={0}
+          y={0}
+          width={width + 2}
+          height={height + 2}
+          rx={50}
+          ry={50}
+          fill="#000000"
+        />
+        <g transform="translate(1,1)">{sign}</g>
+      </svg>
+    );
+  }
 
   return (
     <div
-      id="sign-preview"
-      ref={containerRef}
-      className="p-6 text-left"
-      style={{ fontFamily: "RoadUA" }}
+      style={{
+        display: "inline-block",
+        filter: "drop-shadow(0 0 20px rgba(0,0,0,0.3))",
+      }}
     >
-      {signType === "В1" && <B1 params={params} />}
-      {signType === "В2" && <B2 params={params} />}
-      {signType === "В3" && <B3 params={params} />}
-      {signType === "В4" && <B4 params={params} />}
-
-      {!["В1", "В2", "В3", "В4"].includes(signType) && (
-        <div>Тут буде прев’ю {signType}</div>
-      )}
+      {sign}
     </div>
   );
 }

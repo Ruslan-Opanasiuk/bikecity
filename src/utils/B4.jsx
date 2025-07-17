@@ -82,14 +82,10 @@ function B4({ params }) {
   // === [7] Рендер SVG таблички ===
   return (
     <svg
-      width={outerRect.outerWidth + 2}
-      height={outerRect.outerHeight + 2}
+      width={outerRect.outerWidth}
+      height={outerRect.outerHeight}
       xmlns="http://www.w3.org/2000/svg"
     >
-      <g
-        transform="translate(1,1)"
-        style={{ filter: "drop-shadow(0 0 1px black)" }}
-      >
         {/* === [7.1] Зовнішня біла рамка === */}
         <RectRenderer
           config={outerRect}
@@ -147,7 +143,6 @@ function B4({ params }) {
         {showBlackLine && (
           <rect x={10} y={197} width={580} height={6} fill="#000000" />
         )}
-      </g>
     </svg>
   );
 }

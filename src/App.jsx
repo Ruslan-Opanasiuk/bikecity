@@ -1,15 +1,11 @@
-// src/App.jsx
 import { useEffect, useState, useRef } from "react";
 import { saveAs } from "file-saver";
+import { createRoot } from "react-dom/client";
 
 import SignSelector from "./components/SignSelector";
 import SignPreview from "./components/SignPreview";
 import B1B6SettingsPanel from "./components/settings/B1B6SettingsPanel";
 import B4ItemSettings from "./components/settings/B4ItemSettings";
-
-// Імпортуємо обидва base64-шрифти як рядки
-import mediumData from "./utils/export/RoadUA-Medium.ttf.base64?raw";
-import boldData   from "./utils/export/RoadUA-Bold.ttf.base64?raw";
 
 function App() {
   const [signType, setSignType] = useState("В1");
@@ -39,7 +35,7 @@ function App() {
         numberType: "none",
         routeNumber: "",
         direction: "straight",
-        forceUniformTextSize: false, // ← оце треба!
+        forceUniformTextSize: false,
         b4Items: [
           {
             mainText: "",
@@ -84,23 +80,40 @@ function App() {
     }
   }, [params.tableType]);
 
-  // Реф на контейнер, всередині якого лежить <svg>
-  const previewRef = useRef(null);
+  // --- Генерація <svg> з ізольованим SignPreview (mode="export") ---
+  const renderForExport = async () => {
+    const container = document.createElement("div");
+    container.style.position = "absolute";
+    container.style.left = "-9999px";
+    document.body.appendChild(container);
 
-  // --- Експорт у SVG ---
-  const handleExportSVG = () => {
-    const svgNode = previewRef.current.querySelector("svg");
+    return new Promise((resolve) => {
+      const root = createRoot(container);
+      root.render(
+        <SignPreview
+          signType={signType}
+          params={safeParams}
+          mode="export"
+        />
+      );
+
+      setTimeout(() => {
+        const svgNode = container.querySelector("svg");
+        resolve({ svgNode, root, container });
+      }, 100); // дати час на рендер
+    });
+  };
+
+  const handleExportSVG = async () => {
+    const { svgNode, root, container } = await renderForExport();
     if (!svgNode) return;
 
-    // 1) Запам’ятовуємо «оригінальні» піксельні розміри
     const origW = svgNode.getAttribute("width");
     const origH = svgNode.getAttribute("height");
 
-    // 2) Серіалізуємо SVG у рядок
     const serializer = new XMLSerializer();
     let source = serializer.serializeToString(svgNode);
 
-    // 3) Додаємо xmlns, якщо його немає
     if (!/xmlns=/.test(source)) {
       source = source.replace(
         "<svg",
@@ -108,120 +121,74 @@ function App() {
       );
     }
 
-    // 4) Вбудовуємо обидва шрифти та правило для <text>
-    const defs = `
-      <defs>
-        <style type="text/css">
-          @font-face {
-            font-family: 'RoadUA';
-            src: url(data:font/ttf;base64,${mediumData}) format('truetype');
-            font-weight: 500;
-          }
-          @font-face {
-            font-family: 'RoadUA';
-            src: url(data:font/ttf;base64,${boldData}) format('truetype');
-            font-weight: 700;
-          }
-          text {
-            font-family: 'RoadUA' !important;
-            font-weight: 700 !important;
-            font-feature-settings: 'ss02' !important;
-          }
-        </style>
-      </defs>`;
-    source = source.replace(/<svg[^>]*>/, (m) => m + defs);
-
-    // 5) Додаємо viewBox, щоб внутрішні px масштабувалися
     source = source.replace(
       /<svg([^>]*)>/,
       `<svg$1 viewBox="0 0 ${origW} ${origH}">`
     );
 
-    // 6) Перетворюємо атрибути width/height у mm (1px = 1mm)
     source = source
       .replace(/width="(\d+)"/, 'width="$1mm"')
       .replace(/height="(\d+)"/, 'height="$1mm"');
 
-    // 7) Створюємо Blob і завантажуємо файл
     const blob = new Blob([source], {
       type: "image/svg+xml;charset=utf-8",
     });
     saveAs(blob, `${signType}.svg`);
+
+    root.unmount();
+    document.body.removeChild(container);
   };
 
-
-  // --- Експорт у PNG через canvas ---
   const handleExportPNG = async () => {
-  await document.fonts.ready;
+    await document.fonts.ready;
 
-  const svgNode = previewRef.current.querySelector("svg");
-  if (!svgNode) return;
+    const { svgNode, root, container } = await renderForExport();
+    if (!svgNode) return;
 
-  const serializer = new XMLSerializer();
-  let source = serializer.serializeToString(svgNode);
+    const serializer = new XMLSerializer();
+    let source = serializer.serializeToString(svgNode);
 
-  if (!/xmlns=/.test(source)) {
-    source = source.replace(
-      "<svg",
-      '<svg xmlns="http://www.w3.org/2000/svg"'
-    );
-  }
+    if (!/xmlns=/.test(source)) {
+      source = source.replace(
+        "<svg",
+        '<svg xmlns="http://www.w3.org/2000/svg"'
+      );
+    }
 
-  const defs = `
-    <defs>
-      <style type="text/css">
-        @font-face {
-          font-family: 'RoadUA';
-          src: url(data:font/ttf;base64,${mediumData}) format('truetype');
-          font-weight: 500;
-        }
-        @font-face {
-          font-family: 'RoadUA';
-          src: url(data:font/ttf;base64,${boldData}) format('truetype');
-          font-weight: 700;
-        }
-        text {
-          font-family: 'RoadUA' !important;
-          font-weight: 700 !important;
-          font-feature-settings: 'ss02' !important;
-        }
-      </style>
-    </defs>`;
-
-  source = source.replace(/<svg[^>]*>/, (m) => m + defs);
-
-  const blob = new Blob([source], {
-    type: "image/svg+xml;charset=utf-8",
-  });
-  const url = URL.createObjectURL(blob);
-  const img = new Image();
-
-  img.onload = () => {
-    const widthMm = parseFloat(svgNode.getAttribute("width"));
-    const heightMm = parseFloat(svgNode.getAttribute("height"));
-
-    const scale = 3.7795; // 1 мм = 3.7795 px
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(widthMm * scale);
-    canvas.height = Math.round(heightMm * scale);
-
-    const ctx = canvas.getContext("2d");
-    ctx.scale(scale, scale); // Щоб координати відповідали мм
-    ctx.drawImage(img, 0, 0);
-
-    URL.revokeObjectURL(url);
-    canvas.toBlob((pngBlob) => {
-      saveAs(pngBlob, `${signType}.png`);
+    const blob = new Blob([source], {
+      type: "image/svg+xml;charset=utf-8",
     });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+
+    img.onload = () => {
+      const widthMm = parseFloat(svgNode.getAttribute("width"));
+      const heightMm = parseFloat(svgNode.getAttribute("height"));
+
+      const scale = 3.7795; // 1 мм = 3.7795 px
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(widthMm * scale);
+      canvas.height = Math.round(heightMm * scale);
+
+      const ctx = canvas.getContext("2d");
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, 0, 0);
+
+      URL.revokeObjectURL(url);
+      canvas.toBlob((pngBlob) => {
+        saveAs(pngBlob, `${signType}.png`);
+      });
+    };
+
+    img.onerror = (e) => {
+      console.error("Error loading SVG for PNG export", e);
+    };
+
+    img.src = url;
+
+    root.unmount();
+    document.body.removeChild(container);
   };
-
-  img.onerror = (e) => {
-    console.error("Error loading SVG for PNG export", e);
-  };
-
-  img.src = url;
-};
-
 
   return (
     <div className="min-h-screen bg-gray-50 text-center p-6">
@@ -232,7 +199,7 @@ function App() {
       <SignSelector signType={signType} setSignType={handleSignTypeChange} />
 
       <div className="flex justify-between max-w-4xl mx-auto mb-6 p-4">
-        <div className="flex justify-end w-1/2 p-2" ref={previewRef}>
+        <div className="flex justify-end w-1/2 p-2">
           <SignPreview signType={signType} params={safeParams} />
         </div>
 
@@ -278,4 +245,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;
