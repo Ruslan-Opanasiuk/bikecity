@@ -120,12 +120,15 @@ export function computeB4TextLayout(params) {
     textX += icon.width * icon.scale + 20;
   }
 
-  // 🔧 Якщо передано вирівняне значення — застосовуємо його
+  const originalTextX = textX;
+
+  // === [3.3] ВРАХУВАННЯ ВИРІВНЮВАННЯ textX ===
   if (typeof params.alignedTextX === "number") {
     textX = params.alignedTextX;
   }
+  const textXShift = textX - originalTextX;
 
-  // === [3.3] ДОСТУПНА ШИРИНА ТЕКСТУ ===
+  // === [3.4] ДОСТУПНА ШИРИНА ТЕКСТУ ===
   const baseFontSize1 = BASE_FONT_SIZE_PRIMARY / 0.7;
   const baseFontSize2 = BASE_FONT_SIZE_SECONDARY / 0.7;
 
@@ -136,11 +139,12 @@ export function computeB4TextLayout(params) {
   const badgeGroupWidth = getRouteBadgeGroupWidth(params);
 
   const availableTextWidthMain =
-    520 - (textX - xPadding) - arrowRightSpace - badgeGroupWidth;
-  const availableTextWidthSecondary =
-    520 - (textX - xPadding) - arrowRightSpace;
+    520 - (originalTextX - xPadding) - textXShift - arrowRightSpace - badgeGroupWidth;
 
-  // === [3.4] ПІДГАНЯЄМО РОЗМІР ШРИФТУ І РЯДКИ ===
+  const availableTextWidthSecondary =
+    520 - (originalTextX - xPadding) - textXShift - arrowRightSpace;
+
+  // === [3.5] ПІДГАНЯЄМО РОЗМІР ШРИФТУ І РЯДКИ ===
   let mainTextLines;
   let fontSize1;
 
@@ -173,14 +177,14 @@ export function computeB4TextLayout(params) {
     baseFontSize2
   );
 
-  // === [3.5] ВИЗНАЧЕННЯ ПОЗИЦІЇ ДЛЯ БЕЙДЖУ ===
+  // === [3.6] ВИЗНАЧЕННЯ ПОЗИЦІЇ ДЛЯ БЕЙДЖУ ===
   const measuredLines = mainTextLines.map(line =>
     measureText(line, `${fontSize1}px RoadUA-Bold`)
   );
   const maxTextWidth = Math.max(...measuredLines.map(m => m.width));
   const routeBadgeX = textX + maxTextWidth + 20;
 
-  // === [3.6] ХВИЛІ ДЛЯ ВОДНОГО МАРШРУТУ ===
+  // === [3.7] ХВИЛІ ДЛЯ ВОДНОГО МАРШРУТУ ===
   const showWave = params.icon === "water";
   const waves = PathConfigs.waves;
   const waveWidth = waves.width * waves.scale;
@@ -190,7 +194,6 @@ export function computeB4TextLayout(params) {
   const yShiftText =
     fontSize1 * 0.7 * FONT_VISUAL_HEIGHT_COEFF - fontSize1 * 0.7;
   const applyYShift = showWave ? yShiftText : 0;
-
 
   return {
     mainTextLines,
@@ -218,18 +221,49 @@ export function getMinimalFontSizeAcrossB4Items(items) {
   return Math.min(...fontSizes);
 }
 
-export function getAlignedTextX(items) {
-  const textXs = items.map((params) => {
-    // Усунь вплив alignedTextX при обчисленні
-    const { alignedTextX, ...paramsWithoutAligned } = params;
-
-    const layout = computeB4TextLayout(paramsWithoutAligned);
-    return layout.textX;
+/**
+ * Повертає Map<індекс, вирівняне textX> лише для тих напрямків, які можуть бути вирівняні.
+ */
+export function getAlignedTextXMap(items) {
+  const textXList = items.map((params, i) => {
+    const { alignedTextX, ...cleanParams } = params;
+    const layout = computeB4TextLayout(cleanParams);
+    return { index: i, textX: layout.textX };
   });
 
-  const max = Math.max(...textXs);
-  const min = Math.min(...textXs);
+  const groups = [];
 
-  if (max - min <= 22) return max;
-  return null;
+  // Групування елементів з близькими textX (±20px)
+  for (let i = 0; i < textXList.length; i++) {
+    const base = textXList[i];
+    let group = [base];
+
+    for (let j = i + 1; j < textXList.length; j++) {
+      const next = textXList[j];
+      if (Math.abs(base.textX - next.textX) <= 20) {
+        group.push(next);
+      }
+    }
+
+    // Якщо група має більше 1 елементу — зберігаємо
+    if (group.length > 1) {
+      const existing = groups.flatMap(g => g.map(item => item.index));
+      const newGroup = group.filter(g => !existing.includes(g.index));
+      if (newGroup.length > 1) {
+        groups.push(newGroup);
+      }
+    }
+  }
+
+  // Створення мапи вирівнювань
+  const result = new Map();
+
+  for (const group of groups) {
+    const maxTextX = Math.max(...group.map(g => g.textX));
+    group.forEach(({ index }) => {
+      result.set(index, maxTextX);
+    });
+  }
+
+  return result;
 }

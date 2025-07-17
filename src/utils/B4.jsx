@@ -4,7 +4,7 @@ import B4B7Header from "../components/svg/B4B7Header";
 import RectConfigs from "../config/RectConfigs";
 import {
   getMinimalFontSizeAcrossB4Items,
-  getAlignedTextX,
+  getAlignedTextXMap,
 } from "./B4TextLayout";
 
 /**
@@ -55,25 +55,31 @@ function B4({ params }) {
     return lines;
   };
 
-  // === [6] УНІФІКАЦІЯ ШРИФТУ (якщо активована) ===
+  // === [6] Вирівнювання тексту (по textX) ===
+  let alignedTextXMap = new Map();
   let forcedFontSize1 = null;
-  if (params.forceUniformTextSize && Array.isArray(params.b4Items)) {
-    forcedFontSize1 = getMinimalFontSizeAcrossB4Items(
-      params.b4Items.map((item) => ({
-        ...params,
-        ...item,
-      }))
-    );
-  }
 
-  // === [7] ВИРІВНЮВАННЯ ПО textX (якщо різниця < 20px) ===
-  let alignedTextX = null;
   if (Array.isArray(params.b4Items)) {
     const itemsWithMergedParams = params.b4Items.map((item) => ({
       ...params,
       ...item,
     }));
-    alignedTextX = getAlignedTextX(itemsWithMergedParams);
+
+    alignedTextXMap = getAlignedTextXMap(itemsWithMergedParams);
+
+    // === [7] Уніфікація шрифту з урахуванням вирівнювання ===
+    if (params.forceUniformTextSize) {
+      const itemsWithTextX = itemsWithMergedParams.map((item, index) => {
+        return {
+          ...item,
+          ...(alignedTextXMap.has(index)
+            ? { alignedTextX: alignedTextXMap.get(index) }
+            : {}),
+        };
+      });
+
+      forcedFontSize1 = getMinimalFontSizeAcrossB4Items(itemsWithTextX);
+    }
   }
 
   // === [8] Рендер SVG таблички ===
@@ -108,15 +114,17 @@ function B4({ params }) {
               key={index}
               index={index}
               x={0}
-              y={b4ItemY(index, false)} // Фон не зміщуємо!
+              y={b4ItemY(index, false)} // Фон не зміщується
               isLast={isLast}
               contentOffsetY={contentOffsetY}
               params={{
                 ...params,
                 ...itemParams,
                 hideArrow,
+                ...(alignedTextXMap.has(index) && {
+                  alignedTextX: alignedTextXMap.get(index),
+                }),
                 ...(forcedFontSize1 && { forcedFontSize1 }),
-                ...(alignedTextX && { alignedTextX }),
               }}
               onTooLong={(val) => updateTooLongFlag(index, val)}
             />
@@ -140,13 +148,7 @@ function B4({ params }) {
 
         {/* === [8.6] Чорна смуга під заголовком (для тимчасових знаків) === */}
         {showBlackLine && (
-          <rect
-            x={10}
-            y={197}
-            width={580}
-            height={6}
-            fill="#000000"
-          />
+          <rect x={10} y={197} width={580} height={6} fill="#000000" />
         )}
       </g>
     </svg>

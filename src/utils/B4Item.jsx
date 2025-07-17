@@ -156,6 +156,7 @@ function B4Item({
   // === [5] Рендер ===
   return (
     <g transform={transform || `translate(${x}, ${y})`}>
+      {/* <rect x={40} y={35} width={520} height={80} fill={TEMP_COLOR} /> */}
       {/* ⬛ Тимчасовий жовтий фон — НЕ піднімається */}
       {shouldShowTemporaryBg &&
         (isLast ? (
