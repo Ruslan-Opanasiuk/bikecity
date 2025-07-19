@@ -216,6 +216,30 @@ function B1B7SettingsPanel({
           </div>
         )}
 
+
+        {/* Уніфікація шрифту */}
+        {(isB4 || isB7) &&
+          ((params.b4Items?.length ?? 0) >= 2 || (params.objectCount ?? 0) >= 2) && (
+            <div className="flex items-center gap-2 ml-52">
+              <input
+                type="checkbox"
+                id="forceUniformTextSize"
+                checked={params.forceUniformTextSize || false}
+                onChange={(e) =>
+                  setParams({
+                    ...params,
+                    forceUniformTextSize: e.target.checked,
+                  })
+                }
+              />
+              <label htmlFor="forceUniformTextSize" className="text-sm">
+                Уніфікація шрифту
+              </label>
+            </div>
+          )}
+
+
+
         {/* Кількість напрямків для B4 */}
         {isB4 && (
           <div className="pt-4">
@@ -240,44 +264,25 @@ function B1B7SettingsPanel({
 
         {/* Кількість об'єктів для B7 */}
         {isB7 && (
-<div className="pt-4 text-center">
-  <p className="font-medium mb-2">
-    Кількість обʼєктів: {params.objectCount || 4}
-  </p>
-  <input
-    type="range"
-    min="4"
-    max="15"
-    value={params.objectCount || 4}
-    onChange={handleObjectCountChange}
-    className="w-1/2 mx-auto"
-  />
-  <div className="flex justify-between w-1/2 mx-auto text-xs text-gray-500 mt-1">
-    <span>4</span>
-    <span>15</span>
-  </div>
-</div>
+          <div className="pt-4 text-center">
+            <p className="font-medium mb-2">
+              Кількість обʼєктів: {params.objectCount || 4}
+            </p>
+            <input
+              type="range"
+              min="4"
+              max="15"
+              value={params.objectCount || 4}
+              onChange={handleObjectCountChange}
+              className="w-1/2 mx-auto"
+            />
+            <div className="flex justify-between w-1/2 mx-auto text-xs text-gray-500 mt-1">
+              <span>4</span>
+              <span>15</span>
+            </div>
+          </div>
 
         )}
-
-
-        {/* Уніфікація шрифту */}
-        {(isB4 || isB7) &&
-          ((params.b4Items?.length ?? 0) >= 2 || (params.objectCount ?? 0) >= 2) && (
-            <div className="flex items-center gap-4">
-              <label className="w-48 font-medium">Уніфікація шрифту:</label>
-              <input
-                type="checkbox"
-                checked={params.forceUniformTextSize || false}
-                onChange={(e) =>
-                  setParams({
-                    ...params,
-                    forceUniformTextSize: e.target.checked,
-                  })
-                }
-              />
-            </div>
-          )}
       </div>
     </div>
   );

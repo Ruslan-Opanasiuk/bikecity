@@ -74,7 +74,12 @@ function App() {
     setSignType(newType);
 
     if (["B1", "B2", "B3"].includes(newType)) {
-      setParams(b1b3Params);
+      setParams({
+        tableType: "permanent",
+        numberType: "national",
+        routeNumber: "",
+        direction: "straight",
+      });
     } else if (newType === "B4") {
       setParams({ ...defaultB4Params });
     } else if (newType === "B7") {
@@ -269,6 +274,7 @@ function App() {
           )}
           {isB4orB7 && safeParams.b4Items && (
             <B4B7ItemsPanel
+              key={signType} // <-- це додатковий reset стану при зміні B4/B7
               items={safeParams.b4Items}
               setItemParams={(i, newItem) => updateB4Item(i, newItem)}
               tableType={safeParams.tableType}

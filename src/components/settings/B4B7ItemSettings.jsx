@@ -20,31 +20,26 @@ function B4B7ItemsPanel({
   isB7,
   isTooLongArr = [],
 }) {
-  // Стан для вибраного об'єкта
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Якщо кількість об'єктів змінилась — обираємо перший
+  // Скидаємо selectedIndex на 0 якщо кількість items змінилася і selectedIndex вийшов за межі
   useEffect(() => {
     if (selectedIndex >= items.length) setSelectedIndex(0);
-  }, [items.length, selectedIndex]);
+  }, [items.length]);
 
   // Варіанти для селектора з урахуванням скорочення
   const selectOptions = items.map((item, i) => {
-    // Дістаємо скорочену категорію (ua) з locationTerms
     let short = "";
     if (
-      item.icon &&
-      item.mainText &&
+      item?.icon &&
+      item?.mainText &&
       locationTerms[item.icon] &&
       locationTerms[item.icon][item.mainText]
     ) {
       short = locationTerms[item.icon][item.mainText].ua;
     }
-    // if (!short) short = item.mainText?.trim() || "";
-
-    const name = item.subText?.trim() || "";
+    const name = item?.subText?.trim() || "";
     let label = short;
-
     if (short && name) label = `${short} ${name}`;
     else if (name) label = name;
     else if (!short && !name) label = `Обʼєкт ${i + 1}`;
@@ -54,6 +49,9 @@ function B4B7ItemsPanel({
       label,
     };
   });
+
+  // ⬇ Захист: не рендеримо якщо немає елемента
+  const selectedItem = items[selectedIndex];
 
   return (
     <div>
@@ -67,7 +65,7 @@ function B4B7ItemsPanel({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {selectOptions.map((opt, i) => (
+            {selectOptions.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
               </SelectItem>
@@ -75,19 +73,25 @@ function B4B7ItemsPanel({
           </SelectContent>
         </Select>
       </div>
-      <B4B7ItemSettings
-        key={selectedIndex}
-        index={selectedIndex}
-        label={`Обʼєкт ${selectedIndex + 1}`}
-        params={items[selectedIndex]}
-        setParams={(newParams) => setItemParams(selectedIndex, newParams)}
-        isTooLong={isTooLongArr[selectedIndex]}
-        tableType={tableType}
-        isB7={isB7}
-      />
+      {selectedItem && (
+        <B4B7ItemSettings
+          key={selectedIndex}
+          index={selectedIndex}
+          label={`Обʼєкт ${selectedIndex + 1}`}
+          params={selectedItem}
+          setParams={(newParams) => setItemParams(selectedIndex, newParams)}
+          isTooLong={isTooLongArr[selectedIndex]}
+          tableType={tableType}
+          isB7={isB7}
+        />
+      )}
     </div>
   );
 }
+
+// --- ТУТ ДОДАЙТЕ свій B4B7ItemSettings як імпорт чи як окремий компонент ---
+
+
 
 /**
  * Форма налаштувань для одного об'єкта (B4/B7).
