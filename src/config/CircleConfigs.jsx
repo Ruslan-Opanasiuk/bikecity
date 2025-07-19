@@ -11,6 +11,22 @@ const CircleConfigs = {
     outerRadius: 24,
     strokeWidth: 3
   },
+  B7: {
+    outerRadius: 10,
+    strokeWidth: 0
+  },
+  B7bicycle: {
+    outerRadius: 13,
+    strokeWidth: 2
+  },
+  B7citycentre: {
+    outerRadius: 23,
+    strokeWidth: 0
+  },
+  B7interchange: {
+    outerRadius: 16,
+    strokeWidth: 0
+  }
 }
 
 export default CircleConfigs;

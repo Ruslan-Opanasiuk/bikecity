@@ -1,14 +1,14 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { saveAs } from "file-saver";
 import { createRoot } from "react-dom/client";
 
 import SignSelector from "./components/SignSelector";
 import SignPreview from "./components/SignPreview";
-import B1B6SettingsPanel from "./components/settings/B1B6SettingsPanel";
-import B4ItemSettings from "./components/settings/B4ItemSettings";
+import B1B7SettingsPanel from "./components/settings/B1B7SettingsPanel";
+import B4B7ItemSettings from "./components/settings/B4B7ItemSettings";
 
 function App() {
-  const [signType, setSignType] = useState("В1");
+  const [signType, setSignType] = useState("B1");
 
   const [b1b3Params, setB1b3Params] = useState({
     tableType: "permanent",
@@ -16,40 +16,70 @@ function App() {
     routeNumber: "",
     direction: "straight",
   });
+
   const [params, setParams] = useState(b1b3Params);
 
-  const isB1toB3 = ["В1", "В2", "В3"].includes(signType);
-  const isB4toB6 = ["В4", "В5", "В6"].includes(signType);
-  const isB4 = signType === "В4";
+  const isB1toB3 = ["B1", "B2", "B3"].includes(signType);
+  const isB4orB7 = ["B4", "B7"].includes(signType);
+  const usesB1B6Panel = ["B1", "B2", "B3", "B4", "B7"].includes(signType);
 
-  const enableDirection = isB1toB3 && signType !== "В2";
-  const allowNoneOption = isB4toB6;
+  const enableDirection = isB1toB3 && signType !== "B2";
+  const allowNoneOption = signType === "B4";
 
   const handleSignTypeChange = (newType) => {
     setSignType(newType);
-    if (["В1", "В2", "В3"].includes(newType)) {
+
+    if (["B1", "B2", "B3"].includes(newType)) {
       setParams(b1b3Params);
-    } else {
+    } else if (["B4", "B7"].includes(newType)) {
+      const defaultCount = newType === "B7" ? 4 : 1;
       setParams({
         tableType: "permanent",
         numberType: "none",
         routeNumber: "",
         direction: "straight",
         forceUniformTextSize: false,
-        b4Items: [
-          {
-            mainText: "",
-            subText: "",
-            direction: "straight",
-            routeNumber: "",
-          },
-        ],
+        objectCount: defaultCount,
+        b4Items: Array.from({ length: defaultCount }, () => ({
+          mainText: "",
+          subText: "",
+          direction: "straight",
+          routeNumber: "",
+          icon: "",
+          isTemporaryRoute: false,
+          isUrbanCenter: false,
+          forcedFontSize1: null,
+          alignedTextX: null,
+        })),
       });
+    } else {
+      setParams({});
     }
   };
 
   const setParamsAndStore = (newParams) => {
+    if (signType === "B7") {
+      const count = Math.max(1, Math.min(20, newParams.objectCount || 1));
+      const existing = newParams.b4Items || [];
+      const padded = Array.from({ length: count }, (_, i) => {
+        return existing[i] || {
+          mainText: "",
+          subText: "",
+          direction: "straight",
+          routeNumber: "",
+          icon: "",
+          isTemporaryRoute: false,
+          isUrbanCenter: false,
+          forcedFontSize1: null,
+          alignedTextX: null,
+        };
+      });
+
+      newParams.b4Items = padded;
+    }
+
     setParams(newParams);
+
     if (isB1toB3) setB1b3Params(newParams);
   };
 
@@ -62,7 +92,7 @@ function App() {
   };
 
   const updateB4Item = (index, updatedItem) => {
-    const updatedItems = [...params.b4Items];
+    const updatedItems = [...(params.b4Items || [])];
     updatedItems[index] = updatedItem;
     setParams({ ...params, b4Items: updatedItems });
   };
@@ -80,7 +110,6 @@ function App() {
     }
   }, [params.tableType]);
 
-  // --- Генерація <svg> з ізольованим SignPreview (mode="export") ---
   const renderForExport = async () => {
     const container = document.createElement("div");
     container.style.position = "absolute";
@@ -90,17 +119,13 @@ function App() {
     return new Promise((resolve) => {
       const root = createRoot(container);
       root.render(
-        <SignPreview
-          signType={signType}
-          params={safeParams}
-          mode="export"
-        />
+        <SignPreview signType={signType} params={safeParams} mode="export" />
       );
 
       setTimeout(() => {
         const svgNode = container.querySelector("svg");
         resolve({ svgNode, root, container });
-      }, 100); // дати час на рендер
+      }, 100);
     });
   };
 
@@ -165,7 +190,7 @@ function App() {
       const widthMm = parseFloat(svgNode.getAttribute("width"));
       const heightMm = parseFloat(svgNode.getAttribute("height"));
 
-      const scale = 3.7795; // 1 мм = 3.7795 px
+      const scale = 3.7795;
       const canvas = document.createElement("canvas");
       canvas.width = Math.round(widthMm * scale);
       canvas.height = Math.round(heightMm * scale);
@@ -193,7 +218,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50 text-center p-6">
       <h1 className="text-3xl font-bold mb-6">
-        Конструктор Велосипедного маршрутного орієнтування
+        Конструктор велосипедного маршрутного орієнтування
       </h1>
 
       <SignSelector signType={signType} setSignType={handleSignTypeChange} />
@@ -204,8 +229,8 @@ function App() {
         </div>
 
         <div className="flex flex-col gap-4 justify-start w-1/2 p-2">
-          {(isB1toB3 || isB4toB6) && (
-            <B1B6SettingsPanel
+          {usesB1B6Panel && (
+            <B1B7SettingsPanel
               label={`Налаштування ${signType}`}
               params={safeParams}
               setParams={setParamsAndStore}
@@ -213,15 +238,16 @@ function App() {
               allowNoneOption={allowNoneOption}
             />
           )}
-          {isB4 &&
-            params.b4Items.map((item, i) => (
-              <B4ItemSettings
+          {isB4orB7 &&
+            params.b4Items?.map((item, i) => (
+              <B4B7ItemSettings
                 key={i}
                 index={i}
-                label={`Напрямок ${i + 1}`}
+                label={`Обʼєкт ${i + 1}`}
                 params={item}
                 setParams={(newItem) => updateB4Item(i, newItem)}
                 tableType={params.tableType}
+                isB7={signType === "B7"}
               />
             ))}
         </div>

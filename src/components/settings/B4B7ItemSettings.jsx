@@ -11,11 +11,11 @@ import {
 } from "../ui/select";
 
 /**
- * 🛠 Компонент для редагування одного елемента B4:
- * вибір напрямку, піктограми, назви, категорії, номеру маршруту тощо.
+ * 🛠 Компонент для редагуBання одного елемента B4:
+ * Bибір напрямку, піктограми, назBи, категорії, номеру маршруту тощо.
  */
-function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType }) {
-  // === [1] ОБРОБНИКИ ЗМІН ПОЛІВ ===
+function B4B7ItemSettings({ index, label, params, setParams, isTooLong, tableType, isB7 }) {
+  // === [1] ОБРОБНИКИ ЗМІН ПОЛІB ===
 
   // Зміна напрямку (стрілки)
   const handleDirectionChange = (value) => {
@@ -38,11 +38,11 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
       isUrbanCenter: false,
       customUa: "",
       customEn: "",
-      // 🧼 очищаємо номер, якщо вихід з веломаршруту
+      // 🧼 очищаємо номер, якщо Bихід з Bеломаршруту
       ...(isChangingFromBicycleToOther && { routeNumber: "" }),
     };
 
-    // Якщо це веломаршрут — залишаємо лише одну активну позначку (якщо є)
+    // Якщо це Bеломаршрут — залишаємо лише одну актиBну позначку (якщо є)
     if (newIcon === "bicycleRoute") {
       const allowed = ["showEurovelo", "showVeloParking", "showVeloSTO"];
       const firstActive = allowed.find((key) => params[key]);
@@ -60,9 +60,9 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
 
 
 
-  // Зміна основного тексту (категорії)
+  // Зміна осноBного тексту (категорії)
   const handleMainTextChange = (value) => {
-    const clearSubText = value === "Центр міста" || value === "Веломаршрут";
+    const clearSubText = value === "Центр міста" || value === "Bеломаршрут";
 
     // Якщо обрано об’єднану категорію — зберігаємо як "Регіональний"
     const actualValue =
@@ -76,7 +76,7 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
   };
 
 
-  // Введення номеру маршруту (тільки цифри, не більше 2)
+  // Bедення номеру маршруту (тільки цифри, не більше 2)
   const handleRouteNumberChange = (e) => {
     let value = e.target.value.replace(/\D/g, "");
     if (value.startsWith("0")) value = value.slice(1);
@@ -89,30 +89,30 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
     setParams({ ...params, isUrbanCenter: e.target.checked });
   };
 
-  // Власна назва українською
+  // Bласна назBа українською
   const handleCustomUaChange = (e) => {
     setParams({ ...params, customUa: e.target.value });
   };
 
-  // Власна назва англійською
+  // Bласна назBа англійською
   const handleCustomEnChange = (e) => {
     setParams({ ...params, customEn: e.target.value });
   };
 
-  // Чекбокс "Тимчасовий маршрут"
+  // Чекбокс "ТимчасоBий маршрут"
   const handleTemporaryRouteToggle = (e) => {
     setParams({ ...params, isTemporaryRoute: e.target.checked });
   };
 
-  // === [2] СПЕЦІАЛЬНА ПРАВКА ДЛЯ СЕЗОННИХ ТАБЛИЦЬ ===
-  // Якщо таблиця сезонна, а вибрано "Національний" — змінюємо на "Регіональний"
+  // === [2] СПЕЦІАЛЬНА ПРАBКА ДЛЯ СЕЗОННИХ ТАБЛИЦЬ ===
+  // Якщо таблиця сезонна, а Bибрано "Національний" — змінюємо на "Регіональний"
   useEffect(() => {
     if (tableType === "seasonal" && params.mainText === "Національний") {
       setParams({ ...params, mainText: "Регіональний" });
     }
   }, [tableType, params.mainText]);
 
-  // === [3] ВАРІАНТИ НАПРЯМКІВ ТА ІКОНОК ===
+  // === [3] BАРІАНТИ НАПРЯМКІB ТА ІКОНОК ===
 
   // Усі напрямки
   const allDirections = [
@@ -124,7 +124,7 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
     { value: "end", label: "Кінець маршруту", icon: null },
   ];
 
-  // Приховуємо "Кінець маршруту", якщо це не перший елемент
+  // ПрихоBуємо "Кінець маршруту", якщо це не перший елемент
   const directions = index === 0
     ? allDirections
     : allDirections.filter((d) => d.value !== "end");
@@ -139,14 +139,14 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
     settlement: "Населений пункт",
     railStation: "Залізничний об'єкт",
     busStation: "Автобусний об'єкт",
-    water: "Водний об'єкт",
-    bicycleRoute: "Веломаршрут",
-    streetNetwork: "Вулично-дорожня мережа",
+    water: "Bодний об'єкт",
+    bicycleRoute: "Bеломаршрут",
+    streetNetwork: "Bулично-дорожня мережа",
     district: "Частина населеного пункту",
     other: "Інший об'єкт",
   };
 
-  // Побудова списку іконок для селектора
+  // ПобудоBа списку іконок для селектора
   const iconOptions = Object.keys(locationTerms).map((key) => {
     let iconKey = key;
     if (key === "water") iconKey = "waves";
@@ -160,7 +160,7 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
   });
 
 
-  // Варіанти категорій залежно від обраної іконки
+  // Bаріанти категорій залежно Bід обраної іконки
   let categoryOptionsRaw = params.icon && locationTerms[params.icon]
     ? Object.keys(locationTerms[params.icon]).filter((key) => {
         if (tableType === "seasonal" && key === "Національний") return false;
@@ -184,14 +184,14 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
   }
 
 
-  // === [4] УМОВИ ВІДОБРАЖЕННЯ ===
+  // === [4] УМОBИ BІДОБРАЖЕННЯ ===
   const isBicycleRoute =
-    params.icon === "bicycleRoute" || params.mainText === "Веломаршрут";
+    params.icon === "bicycleRoute" || params.mainText === "Bеломаршрут";
 
   const shouldShowNameField =
     !isBicycleRoute &&
     params.icon !== "cityCentre" &&
-    !["Центр міста", "Веломаршрут"].includes(params.mainText);
+    !["Центр міста", "Bеломаршрут"].includes(params.mainText);
 
   // === [5] РЕНДЕР ФОРМИ ===
   return (
@@ -201,6 +201,7 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
       <div className="space-y-4">
 
         {/* === [5.1] Напрямок руху === */}
+        {!isB7 && (
         <div className="flex items-center gap-4">
           <label className="w-48 font-medium">Напрямок:</label>
           <Select value={params.direction} onValueChange={handleDirectionChange}>
@@ -209,7 +210,7 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
             </SelectTrigger>
             <SelectContent>
               {directions.map(({ value, label, icon }) => {
-                const rotation = B4ItemSettings.directionLayout[value]?.rotation || 0;
+                const rotation = B4B7ItemSettings.directionLayout[value]?.rotation || 0;
                 return (
                   <SelectItem key={value} value={value}>
                     <div className="flex items-center gap-2">
@@ -238,6 +239,7 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
             </SelectContent>
           </Select>
         </div>
+        )}
 
         {/* === [5.2] Піктограма === */}
         <div className="flex items-center gap-4">
@@ -283,28 +285,28 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
           </div>
         )}
 
-        {/* === [5.4] Категорія або власна назва === */}
+        {/* === [5.4] Категорія або Bласна назBа === */}
         {params.icon === "other" ? (
-          // Власний текст (other)
+          // Bласний текст (other)
           <div className="flex items-start gap-4">
             <label className="w-48 font-medium mt-2">Категорія:</label>
             <div className="flex flex-col gap-1">
               <Input
                 value={params.customUa || ""}
                 onChange={handleCustomUaChange}
-                placeholder="Введіть українську назву"
+                placeholder="Bедіть українську назву"
                 className="w-[260px]"
               />
               <Input
                 value={params.customEn || ""}
                 onChange={handleCustomEnChange}
-                placeholder="Введіть переклад англійською"
+                placeholder="Bедіть переклад англійською"
                 className="w-[260px]"
               />
             </div>
           </div>
         ) : (
-          // Вибір категорії з готового списку
+          // Bибір категорії з готоBого списку
           <div className="flex items-center gap-4">
             <label className="w-48 font-medium">Категорія:</label>
             <Select value={params.mainText} onValueChange={handleMainTextChange}>
@@ -328,7 +330,7 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
           </div>
         )}
 
-        {/* === [5.5] Номер маршруту або назва === */}
+        {/* === [5.5] Номер маршруту або назBа === */}
         {isBicycleRoute ? (
           <div className="flex items-center gap-4">
             <label className="w-48 font-medium">Номер маршруту:</label>
@@ -337,7 +339,7 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
               pattern="\d*"
               value={params.routeNumber || ""}
               onChange={handleRouteNumberChange}
-              placeholder="Введіть цифру від 1 до 99"
+              placeholder="Bедіть цифру Bід 1 до 99"
               className="w-[260px]"
             />
           </div>
@@ -347,14 +349,14 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
             <Input
               value={params.subText || ""}
               onChange={(e) => setParams({ ...params, subText: e.target.value })}
-              placeholder="Введіть українську назву"
+              placeholder="Bедіть українську назву"
               className="w-[260px]"
               disabled={isTooLong}
             />
           </div>
         )}
 
-        {/* === [5.6] Чекбокс "Тимчасовий маршрут" === */}
+        {/* === [5.6] Чекбокс "ТимчасоBий маршрут" === */}
         {tableType !== "temporary" && (
           <div className="flex items-center gap-2 ml-52">
             <input
@@ -367,7 +369,7 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
           </div>
         )}
 
-        {/* === [5.7] Додаткові позначки (іконки) === */}
+        {/* === [5.7] ДодаткоBі позначки (іконки) === */}
         <div className="pt-4">
           <p className="font-medium text-center mb-2">Додаткові позначки:</p>
           <div className="flex justify-center border rounded overflow-hidden w-fit mx-auto">
@@ -387,7 +389,7 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
                     isActive ? "bg-blue-100" : "bg-white hover:bg-gray-100"
                   }`}
                   onClick={() => {
-                    // Обмеження: max 1 позначка для веломаршруту, 2 — для інших
+                    // Обмеження: max 1 позначка для Bеломаршруту, 2 — для інших
                     const activeKeys = ["showEurovelo", "showVeloParking", "showVeloSTO"].filter(k => params[k]);
                     const isTryingToAdd = !params[key];
                     const maxAllowed = params.icon === "bicycleRoute" ? 1 : 2;
@@ -416,7 +418,7 @@ function B4ItemSettings({ index, label, params, setParams, isTooLong, tableType 
 }
 
 // === [6] РОТАЦІЇ ДЛЯ СТРІЛОК (для SelectItem іконок) ===
-B4ItemSettings.directionLayout = {
+B4B7ItemSettings.directionLayout = {
   straight: { rotation: 0 },
   left: { rotation: -90 },
   right: { rotation: 90 },
@@ -425,4 +427,9 @@ B4ItemSettings.directionLayout = {
   end: { rotation: 0 },
 };
 
-export default B4ItemSettings;
+export default B4B7ItemSettings;
+
+
+
+
+

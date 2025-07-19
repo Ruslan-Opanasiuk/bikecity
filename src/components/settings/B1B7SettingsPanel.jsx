@@ -8,41 +8,58 @@ import {
   SelectValue,
 } from "../ui/select";
 
-function B1B6SettingsPanel({ label, params, setParams, enableDirection, allowNoneOption }) {
+function B1B7SettingsPanel({
+  label,
+  params,
+  setParams,
+  enableDirection,
+  allowNoneOption,
+}) {
+  const isB4 = label.includes("B4");
+  const isB7 = label.includes("B7");
 
+  const directionOptions = [
+    { value: "straight", label: "Прямо", icon: PathConfigs.smallArrow },
+    { value: "left", label: "Ліворуч", icon: PathConfigs.smallArrow },
+    { value: "right", label: "Праворуч", icon: PathConfigs.smallArrow },
+    {
+      value: "straight-left",
+      label: "Прямо і ліворуч",
+      icon: PathConfigs.smallArrow,
+    },
+    {
+      value: "straight-right",
+      label: "Прямо і праворуч",
+      icon: PathConfigs.smallArrow,
+    },
+  ];
 
-// у компоненті
-const directionOptions = [
-  { value: "straight", label: "Прямо", icon: PathConfigs.smallArrow },
-  { value: "left", label: "Ліворуч", icon: PathConfigs.smallArrow },
-  { value: "right", label: "Праворуч", icon: PathConfigs.smallArrow },
-  { value: "straight-left", label: "Прямо і ліворуч", icon: PathConfigs.smallArrow },
-  { value: "straight-right", label: "Прямо і праворуч", icon: PathConfigs.smallArrow },
-];
-
-const directionRotation = {
-  straight: 0,
-  left: -90,
-  right: 90,
-  "straight-left": -45,
-  "straight-right": 45,
-};
-
+  const directionRotation = {
+    straight: 0,
+    left: -90,
+    right: 90,
+    "straight-left": -45,
+    "straight-right": 45,
+  };
 
   const handleTableTypeChange = (value) => {
     let numberType = params.numberType;
 
-    if (value === "seasonal" && numberType === "national") numberType = "regional";
-    if (value !== "permanent" && numberType === "eurovelo") numberType = "regional";
+    if (value === "seasonal" && numberType === "national")
+      numberType = "regional";
+    if (value !== "permanent" && numberType === "eurovelo")
+      numberType = "regional";
 
     setParams({ ...params, tableType: value, numberType });
   };
 
   const handleNumberTypeChange = (value) => {
     const routeNumber =
-      value === "eurovelo" ? "4" :
-      value === "none" ? "" :
-      params.routeNumber;
+      value === "eurovelo"
+        ? "4"
+        : value === "none"
+        ? ""
+        : params.routeNumber;
 
     setParams({ ...params, numberType: value, routeNumber });
   };
@@ -72,32 +89,48 @@ const directionRotation = {
     setParams({ ...params, b4Items: newItems });
   };
 
+  const handleObjectCountChange = (e) => {
+    const value = parseInt(e.target.value, 10);
+    const clamped = Math.max(4, Math.min(value, 15));
+    setParams({ ...params, objectCount: clamped });
+  };
+
   const getNumberTypeOptions = () => {
     const options = [];
 
-    if (allowNoneOption) options.push({ value: "none", label: "Немає" });
-    if (params.tableType !== "seasonal") options.push({ value: "national", label: "Національний" });
+    if (label.includes("B4") || label.includes("B7")) {
+      options.push({ value: "none", label: "Немає" });
+    }
 
-    if (label.includes("В2")) {
+    if (params.tableType !== "seasonal") {
+      options.push({ value: "national", label: "Національний" });
+    }
+
+    if (label.includes("B2")) {
       options.push({ value: "regional", label: "Регіональний/Локальний" });
     } else {
       options.push({ value: "regional", label: "Регіональний" });
       options.push({ value: "local", label: "Локальний" });
     }
 
-    if (params.tableType === "permanent" && !label.includes("В4") && !label.includes("В5") && !label.includes("В6")) {
+    if (
+      params.tableType === "permanent" &&
+      !label.includes("B4") &&
+      !label.includes("B7")
+    ) {
       options.push({ value: "eurovelo", label: "Eurovelo 4" });
     }
 
     return options;
   };
 
+
   return (
     <div className="bg-white border border-gray-300 p-6 shadow-md w-fit">
       <p className="text-xl font-semibold mb-6 text-center">{label}</p>
 
       <div className="space-y-4">
-        {/* Призначення веломаршруту */}
+        {/* Тип таблички */}
         <div className="flex items-center gap-4">
           <label className="w-48 font-medium">Тип таблички:</label>
           <Select value={params.tableType} onValueChange={handleTableTypeChange}>
@@ -183,8 +216,8 @@ const directionRotation = {
           </div>
         )}
 
-        {/* Кількість напрямків (для В4) */}
-        {label.includes("В4") && (
+        {/* Кількість напрямків для B4 */}
+        {isB4 && (
           <div className="pt-4">
             <p className="font-medium text-center mb-2">Кількість напрямків</p>
             <div className="flex justify-center border rounded overflow-hidden w-fit mx-auto">
@@ -204,25 +237,45 @@ const directionRotation = {
             </div>
           </div>
         )}
-        
-        {/* Уніфікація шрифту (тільки для В4 з 2–3 напрямками) */}
-        {label.includes("В4") &&
-          (params.b4Items?.length === 2 || params.b4Items?.length === 3) && (
+
+        {/* Кількість об'єктів для B7 */}
+        {isB7 && (
+          <div className="pt-4 text-center">
+            <p className="font-medium mb-2">
+              Кількість обʼєктів: {params.objectCount || 4}
+            </p>
+            <input
+              type="range"
+              min="4"
+              max="15"
+              value={params.objectCount || 4}
+              onChange={handleObjectCountChange}
+              className="w-1/2 mx-auto"
+            />
+          </div>
+        )}
+
+
+        {/* Уніфікація шрифту */}
+        {(isB4 || isB7) &&
+          ((params.b4Items?.length ?? 0) >= 2 || (params.objectCount ?? 0) >= 2) && (
             <div className="flex items-center gap-4">
               <label className="w-48 font-medium">Уніфікація шрифту:</label>
               <input
                 type="checkbox"
                 checked={params.forceUniformTextSize || false}
                 onChange={(e) =>
-                  setParams({ ...params, forceUniformTextSize: e.target.checked })
+                  setParams({
+                    ...params,
+                    forceUniformTextSize: e.target.checked,
+                  })
                 }
               />
             </div>
-        )}
-
+          )}
       </div>
     </div>
   );
 }
 
-export default B1B6SettingsPanel;
+export default B1B7SettingsPanel;

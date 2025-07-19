@@ -3,8 +3,9 @@ import B1 from "../utils/B1";
 import B2 from "../utils/B2";
 import B3 from "../utils/B3";
 import B4 from "../utils/B4";
+import B7 from "../utils/B7";
 
-const components = { В1: B1, В2: B2, В3: B3, В4: B4 };
+const components = { B1: B1, B2: B2, B3: B3, B4: B4, B7: B7};
 
 function SignPreview({ signType, params, mode = "preview" }) {
   const Component = components[signType];
