@@ -114,16 +114,16 @@ function B7Item({
       {/* [5.2] Вертикальна лінія */}
       <rect
         x={47.5}
-        y={isFirst ? 50 : 0}
+        y={isFirst ? 41 : 0}
         width={6}
         height={
           isFirst
             ? // Якщо перший і два рядки — з 50, довжина 100
               layout.mainTextLines.length > 1
                 ? 100
-                : 50
+                : 59
             : isLast
-            ? 50
+            ? 59
             : itemHeight
         }
         fill={isSeasonal ? TEMP_COLOR : "#000000"}

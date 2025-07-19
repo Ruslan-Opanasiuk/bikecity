@@ -5,7 +5,50 @@ import { createRoot } from "react-dom/client";
 import SignSelector from "./components/SignSelector";
 import SignPreview from "./components/SignPreview";
 import B1B7SettingsPanel from "./components/settings/B1B7SettingsPanel";
-import B4B7ItemSettings from "./components/settings/B4B7ItemSettings";
+import B4B7ItemsPanel from "./components/settings/B4B7ItemSettings";
+
+// === Дефолтні об'єкти для B4/B7 ===
+const defaultB4Params = {
+  tableType: "permanent",
+  numberType: "none",
+  routeNumber: "",
+  direction: "straight",
+  forceUniformTextSize: false,
+  objectCount: 1,
+  b4Items: [
+    {
+      mainText: "",
+      subText: "",
+      direction: "straight",
+      routeNumber: "",
+      icon: "",
+      isTemporaryRoute: false,
+      isUrbanCenter: false,
+      forcedFontSize1: null,
+      alignedTextX: null,
+    },
+  ],
+};
+
+const defaultB7Params = {
+  tableType: "permanent",
+  numberType: "none",
+  routeNumber: "",
+  direction: "straight",
+  forceUniformTextSize: false,
+  objectCount: 4,
+  b4Items: Array.from({ length: 4 }, () => ({
+    mainText: "",
+    subText: "",
+    direction: "straight",
+    routeNumber: "",
+    icon: "",
+    isTemporaryRoute: false,
+    isUrbanCenter: false,
+    forcedFontSize1: null,
+    alignedTextX: null,
+  })),
+};
 
 function App() {
   const [signType, setSignType] = useState("B1");
@@ -26,37 +69,22 @@ function App() {
   const enableDirection = isB1toB3 && signType !== "B2";
   const allowNoneOption = signType === "B4";
 
+  // === Головна логіка перемикання типу знака ===
   const handleSignTypeChange = (newType) => {
     setSignType(newType);
 
     if (["B1", "B2", "B3"].includes(newType)) {
       setParams(b1b3Params);
-    } else if (["B4", "B7"].includes(newType)) {
-      const defaultCount = newType === "B7" ? 4 : 1;
-      setParams({
-        tableType: "permanent",
-        numberType: "none",
-        routeNumber: "",
-        direction: "straight",
-        forceUniformTextSize: false,
-        objectCount: defaultCount,
-        b4Items: Array.from({ length: defaultCount }, () => ({
-          mainText: "",
-          subText: "",
-          direction: "straight",
-          routeNumber: "",
-          icon: "",
-          isTemporaryRoute: false,
-          isUrbanCenter: false,
-          forcedFontSize1: null,
-          alignedTextX: null,
-        })),
-      });
+    } else if (newType === "B4") {
+      setParams({ ...defaultB4Params });
+    } else if (newType === "B7") {
+      setParams({ ...defaultB7Params });
     } else {
       setParams({});
     }
   };
 
+  // === Синхронізація обʼєктів для B7 (щоб не було out-of-range помилок) ===
   const setParamsAndStore = (newParams) => {
     if (signType === "B7") {
       const count = Math.max(1, Math.min(20, newParams.objectCount || 1));
@@ -74,15 +102,14 @@ function App() {
           alignedTextX: null,
         };
       });
-
       newParams.b4Items = padded;
     }
-
     setParams(newParams);
 
     if (isB1toB3) setB1b3Params(newParams);
   };
 
+  // === Коректно підлаштовуємо numberType для B1-B3 ===
   const safeParams = {
     ...params,
     numberType:
@@ -91,12 +118,14 @@ function App() {
         : params.numberType,
   };
 
+  // === Оновлення окремого елемента B4/B7 ===
   const updateB4Item = (index, updatedItem) => {
     const updatedItems = [...(params.b4Items || [])];
     updatedItems[index] = updatedItem;
     setParams({ ...params, b4Items: updatedItems });
   };
 
+  // === Авто-відключення isTemporaryRoute якщо тип таблиці змінився ===
   useEffect(() => {
     if (params.tableType === "temporary") {
       const items = params.b4Items || [];
@@ -110,6 +139,7 @@ function App() {
     }
   }, [params.tableType]);
 
+  // ==== Експорт SVG / PNG як було ====
   const renderForExport = async () => {
     const container = document.createElement("div");
     container.style.position = "absolute";
@@ -121,7 +151,6 @@ function App() {
       root.render(
         <SignPreview signType={signType} params={safeParams} mode="export" />
       );
-
       setTimeout(() => {
         const svgNode = container.querySelector("svg");
         resolve({ svgNode, root, container });
@@ -166,7 +195,6 @@ function App() {
 
   const handleExportPNG = async () => {
     await document.fonts.ready;
-
     const { svgNode, root, container } = await renderForExport();
     if (!svgNode) return;
 
@@ -215,6 +243,7 @@ function App() {
     document.body.removeChild(container);
   };
 
+  // ==== JSX ====
   return (
     <div className="min-h-screen bg-gray-50 text-center p-6">
       <h1 className="text-3xl font-bold mb-6">
@@ -238,18 +267,14 @@ function App() {
               allowNoneOption={allowNoneOption}
             />
           )}
-          {isB4orB7 &&
-            params.b4Items?.map((item, i) => (
-              <B4B7ItemSettings
-                key={i}
-                index={i}
-                label={`Обʼєкт ${i + 1}`}
-                params={item}
-                setParams={(newItem) => updateB4Item(i, newItem)}
-                tableType={params.tableType}
-                isB7={signType === "B7"}
-              />
-            ))}
+          {isB4orB7 && safeParams.b4Items && (
+            <B4B7ItemsPanel
+              items={safeParams.b4Items}
+              setItemParams={(i, newItem) => updateB4Item(i, newItem)}
+              tableType={safeParams.tableType}
+              isB7={signType === "B7"}
+            />
+          )}
         </div>
       </div>
 

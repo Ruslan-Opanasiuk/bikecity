@@ -17,7 +17,7 @@ const CircleConfigs = {
   },
   B7bicycle: {
     outerRadius: 13,
-    strokeWidth: 2
+    strokeWidth: 6
   },
   B7citycentre: {
     outerRadius: 23,
