@@ -386,7 +386,7 @@ function B4B7ItemSettings({ index, label, params, setParams, isTooLong, tableTyp
           </div>
         )}
 
-        {/* Номер маршруту або назва */}
+
         {isBicycleRoute ? (
           <div className="flex items-center gap-4">
             <label className="w-48 font-medium">Номер маршруту:</label>
@@ -400,20 +400,42 @@ function B4B7ItemSettings({ index, label, params, setParams, isTooLong, tableTyp
             />
           </div>
         ) : shouldShowNameField && (
+          <>
+            <div className="flex items-center gap-4">
+              <label className="w-48 font-medium">Назва:</label>
+              <Input
+                value={params.subText || ""}
+                onChange={(e) => setParams({ ...params, subText: e.target.value })}
+                placeholder="Ведіть українську назву"
+                className="w-[260px]"
+                disabled={isTooLong}
+              />
+            </div>
+          </>
+        )}
+
+        {isB7 && (
           <div className="flex items-center gap-4">
-            <label className="w-48 font-medium">Назва:</label>
+            <label className="w-48 font-medium">Відстань (км):</label>
             <Input
-              value={params.subText || ""}
-              onChange={(e) => setParams({ ...params, subText: e.target.value })}
-              placeholder="Ведіть українську назву"
+              inputMode="numeric"
+              pattern="\d*"
+              value={params.distance ?? ""}
+              onChange={(e) => {
+                let val = e.target.value;
+                if (/^(\d{1,2}(,\d?)?)?$/.test(val)) {
+                  setParams({ ...params, distance: val });
+                }
+              }}
+              placeholder="Вкажіть відстань"
               className="w-[260px]"
-              disabled={isTooLong}
             />
           </div>
         )}
 
+
         {/* Чекбокс "Тимчасовий маршрут" */}
-        {tableType !== "temporary" && (
+        {tableType !== "temporary" && !(isB7 && tableType === "seasonal") && (
           <div className="flex items-center gap-2 ml-52">
             <input
               type="checkbox"

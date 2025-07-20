@@ -94,6 +94,19 @@ function B7Item({
     );
   }, [secondaryLine, fontSize2, textX, mainTextLines.length, applyYShift]);
 
+  const kmTextPath = useMemo(() => {
+    return textToPath(
+      roadUABold,
+      params.distance,
+      23,
+      63,
+      50,
+      "right",
+      "visualX"
+    );
+  });
+  
+
   const isSeasonal = params.tableType === "seasonal";
 
   return (
@@ -107,20 +120,18 @@ function B7Item({
         <rect x={91} y={0} width={481} height={100} fill="green" />
       ) : (
         <rect x={91} y={0} width={481} height={150} fill="gray" />
-      )}
-
-      <rect x={0} y={0} width={91} height={100} fill="yellow" /> */}
+      )} */}
 
       {/* [5.2] Вертикальна лінія */}
       <rect
-        x={47.5}
+        x={92.5}
         y={isFirst ? 41 : 0}
         width={6}
         height={
           isFirst
-            ? // Якщо перший і два рядки — з 50, довжина 100
+            ?
               layout.mainTextLines.length > 1
-                ? 100
+                ? 109
                 : 59
             : isLast
             ? 59
@@ -137,6 +148,8 @@ function B7Item({
 
       {/* [5.4] Другорядний текст */}
       <path d={secondaryPath} fill="black" />
+
+      <path d={kmTextPath} fill="black" />
 
       {/* [5.5] Веломаршрут — спеціальна кругла іконка */}
       {(isVeloRoute || iconKey === "cityCentre" || iconKey === "interchange" || useDefaultCircleIcon) && (
@@ -158,7 +171,7 @@ function B7Item({
                 : "#000000"
               : "#fff"
           }
-          cx={50.5}
+          cx={95.5}
           cy={50}
         />
       )}

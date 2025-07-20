@@ -1,13 +1,22 @@
+import React, { useMemo } from "react";
+import opentype from "opentype.js";
+
+import { textToPath } from "../utils/textToPath";
 import RectRenderer from "./RectRenderer";
 import B7Item from "./B7Item";
 import B4B7Header from "../components/svg/B4B7Header";
 import PathConfigs from "../config/PathConfigs";
+import boldData from "../utils/export/RoadUA-Bold.ttf.base64?raw";
 import { getRouteBadgeGroupWidth } from "../components/svg/RouteBadgeGroup";
 import {
   getMinimalFontSizeAcrossB4Items,
   getAlignedTextXMap,
   computeB4TextLayout,
 } from "./TextLayout";
+
+
+const boldBuf = Uint8Array.from(atob(boldData), (c) => c.charCodeAt(0)).buffer;
+const roadUABold = opentype.parse(boldBuf);
 
 function B7({ params }) {
   const items = Array.isArray(params.b4Items) ? params.b4Items : [];
@@ -29,11 +38,11 @@ function B7({ params }) {
 
     // === ГОЛОВНА ЛОГІКА: textX, iconRenderX ===
     const textX = isRibbonOrCircle
-      ? 91 + ((iconConfig?.width || 0) * (iconConfig?.scale2 || 1)) + 20
-      : 91;
+      ? 136 + ((iconConfig?.width || 0) * (iconConfig?.scale2 || 1)) + 20
+      : 136;
     const iconRenderX = isRibbonOrCircle
-      ? 91
-      : 50.5 - (iconConfig?.width || 0) * (iconConfig?.scale2 || 1) / 2;
+      ? 136
+      : 95.5 - (iconConfig?.width || 0) * (iconConfig?.scale2 || 1) / 2;
 
     // Решта як було
     const badgeGroupWidth = getRouteBadgeGroupWidth({ ...params, ...item });
@@ -89,8 +98,23 @@ function B7({ params }) {
     }
   }
 
+  const kmText = useMemo(() => {
+    return textToPath(
+      roadUABold,
+      "km",
+      23,
+      63, //41.5
+      240,
+      "right",
+      "visualx"
+    );
+  });
+
   return (
     <svg width={600} height={totalHeight} xmlns="http://www.w3.org/2000/svg">
+
+
+
       {/* Зовнішня біла рамка */}
       <RectRenderer
         config={{
@@ -104,6 +128,18 @@ function B7({ params }) {
         outerColor="#FFFFFF"
         innerColor="#FFFFFF"
       />
+
+
+      {/* <rect x={10} y={200} width={9} height={490} fill={"blue"} />
+      <rect x={64} y={200} width={9} height={490} fill={"blue"} />
+      <rect x={118} y={200} width={18} height={490} fill={"green"} />
+      <rect x={10} y={200} width={126} height={40} fill={"red"} /> */}
+      
+
+      <path d={kmText} fill="black" />
+
+
+
 
       {/* B7Item з усіма параметрами */}
       {items.map((itemParams, index) => {

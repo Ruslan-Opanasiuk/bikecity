@@ -47,6 +47,7 @@ const defaultB7Params = {
     isUrbanCenter: false,
     forcedFontSize1: null,
     alignedTextX: null,
+    distance: "",
   })),
 };
 
