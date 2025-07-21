@@ -112,15 +112,16 @@ function B7Item({
   return (
     <g transform={transform || `translate(${x}, ${y})`}>
       {/* [5.1] Тимчасове жовте тло */}
-      {isTemporaryRoute && (
+      {/* {isTemporaryRoute && (
         <rect x={10} y={0} width={580} height={itemHeight} fill={TEMP_COLOR} />
       )}
       
-      {/* {mainTextLines.length === 1 ? (
+      {mainTextLines.length === 1 ? (
         <rect x={91} y={0} width={481} height={100} fill="green" />
       ) : (
         <rect x={91} y={0} width={481} height={150} fill="gray" />
-      )} */}
+      )}
+      {params.icon === "water" ? (<rect x={91} y={0} width={481} height={134} fill="red" />) : (<rect x={91} y={0} width={481} height={100} fill="none" />)} */}
 
       {/* [5.2] Вертикальна лінія */}
       <rect
@@ -188,8 +189,8 @@ function B7Item({
       )}
 
       {/* [5.8] Хвильки для води */}
-      {/* {params.icon === "water" && (
-        <g transform={`translate(${textX}, ${125 - PathConfigs.waves.height * PathConfigs.waves.scale / 2})`}>
+      {params.icon === "water" && (
+        <g transform={`translate(${textX}, ${100})`}>
           {Array.from({ length: waveCount }).map((_, i) => (
             <path
               key={i}
@@ -199,7 +200,7 @@ function B7Item({
             />
           ))}
         </g>
-      )} */}
+      )}
 
       {/* [5.9] Бейджі маршрутів (номери, типи тощо) */}
       <RouteBadgeGroup

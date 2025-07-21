@@ -86,7 +86,6 @@ function B7({ params }) {
 
   // === 3. Генеруємо фінальні layout-и ===
   const layouts = baseParamsArray.map((item, i) => {
-    // вирівнюємо тільки якщо є в alignedTextXMap
     const finalParams = {
       ...item,
       ...(alignedTextXMap.has(i) && {
@@ -96,8 +95,14 @@ function B7({ params }) {
       ...(forcedFontSize1 && { forcedFontSize1 }),
     };
     const layout = computeB4TextLayout(finalParams);
-    const hasTwoLines = layout.mainTextLines.length > 1;
-    const itemHeight = hasTwoLines ? 150 : 100;
+
+    let itemHeight = 100;
+    if (finalParams.icon === "water") {
+      itemHeight = 134;
+    } else if (layout.mainTextLines.length > 1) {
+      itemHeight = 150;
+    }
+
     return {
       layout,
       itemHeight,
@@ -105,6 +110,7 @@ function B7({ params }) {
       iconRenderX: finalParams.iconRenderX,
     };
   });
+
 
   // === 4. Координати Y і розміри ===
   const baseY = 200;
