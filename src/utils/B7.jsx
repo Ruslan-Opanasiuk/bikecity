@@ -55,26 +55,42 @@ function B7({ params }) {
     };
   });
 
-  // === 2. Вираховуємо карту вирівнювання X і уніфікований розмір шрифту ===
-  const alignedTextXMap = getAlignedTextXMap(baseParamsArray);
+  // === 2. Фільтруємо лише заповнені елементи для вирівнювання ===
+  const filledParamsArray = baseParamsArray
+    .map((item, index) => ({ ...item, _originIndex: index }))
+    .filter(item => !!(item.mainText || item.icon)); // або твій критерій
+
+  // Створюємо map index -> textX тільки для заповнених!
+  const filledAlignedTextXMap = getAlignedTextXMap(filledParamsArray);
+
+  // Тепер переносимо вирівнювання до глобального масиву, але лише для тих індексів, які є у filledParamsArray
+  const alignedTextXMap = new Map();
+  filledParamsArray.forEach(item => {
+    if (filledAlignedTextXMap.has(item._originIndex)) {
+      alignedTextXMap.set(item._originIndex, filledAlignedTextXMap.get(item._originIndex));
+    }
+  });
 
   let forcedFontSize1 = null;
   if (params.forceUniformTextSize) {
-    // Усі item-и з узгодженим X
-    const withAligned = baseParamsArray.map((item, index) => ({
+    // Знову — лише для заповнених
+    const withAligned = filledParamsArray.map((item) => ({
       ...item,
-      ...(alignedTextXMap.has(index) && {
-        alignedTextX: alignedTextXMap.get(index),
+      ...(alignedTextXMap.has(item._originIndex) && {
+        textX: alignedTextXMap.get(item._originIndex),
+        alignedTextX: alignedTextXMap.get(item._originIndex),
       }),
     }));
     forcedFontSize1 = getMinimalFontSizeAcrossB4Items(withAligned);
   }
 
-  // === 3. Генеруємо фінальні layout-и з уніфікацією ===
+  // === 3. Генеруємо фінальні layout-и ===
   const layouts = baseParamsArray.map((item, i) => {
+    // вирівнюємо тільки якщо є в alignedTextXMap
     const finalParams = {
       ...item,
       ...(alignedTextXMap.has(i) && {
+        textX: alignedTextXMap.get(i),
         alignedTextX: alignedTextXMap.get(i),
       }),
       ...(forcedFontSize1 && { forcedFontSize1 }),
@@ -85,8 +101,8 @@ function B7({ params }) {
     return {
       layout,
       itemHeight,
-      textX: item.textX,
-      iconRenderX: item.iconRenderX,
+      textX: finalParams.textX,
+      iconRenderX: finalParams.iconRenderX,
     };
   });
 
@@ -139,7 +155,6 @@ function B7({ params }) {
         const isFirst = index === 0;
         const isLast = index === items.length - 1;
         const y = 40 + itemY[index];
-
         return (
           <B7Item
             key={index}
@@ -156,6 +171,7 @@ function B7({ params }) {
               ...params,
               ...itemParams,
               ...(alignedTextXMap.has(index) && {
+                textX: alignedTextXMap.get(index),
                 alignedTextX: alignedTextXMap.get(index),
               }),
               ...(forcedFontSize1 && { forcedFontSize1 }),
