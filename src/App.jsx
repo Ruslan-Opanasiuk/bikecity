@@ -106,6 +106,7 @@ function App() {
           isUrbanCenter: false,
           forcedFontSize1: null,
           alignedTextX: null,
+          distance: "", // ← ДОДАЙ ТУТ!
         };
       });
       newParams.b4Items = padded;
@@ -114,6 +115,7 @@ function App() {
 
     if (isB1toB3) setB1b3Params(newParams);
   };
+
 
   // === Коректно підлаштовуємо numberType для B1-B3 ===
   const safeParams = {

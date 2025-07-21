@@ -14,29 +14,26 @@ import {
   computeB4TextLayout,
 } from "./TextLayout";
 
-
 const boldBuf = Uint8Array.from(atob(boldData), (c) => c.charCodeAt(0)).buffer;
 const roadUABold = opentype.parse(boldBuf);
 
 function B7({ params }) {
   const items = Array.isArray(params.b4Items) ? params.b4Items : [];
 
-  // Множина для визначення типу іконки
+  // === 1. Попередній розрахунок базових layout-ів ===
   const ribbonOrCircleIcons = new Set([
     "cityCentre", "bridge", "interchange", "bicycleRoute", "district", "other", "water", "streetNetwork"
   ]);
 
-  // Масив леяутів і координат
-  const layouts = items.map((item, i) => {
+  // Базовий набір параметрів (без уніфікації)
+  const baseParamsArray = items.map((item) => {
     let iconKey = item.icon;
     if (iconKey === "streetNetwork" && item.isUrbanCenter) {
       iconKey = "cityCentre";
     }
     const iconConfig = iconKey ? PathConfigs[iconKey] : null;
-    // Визначення типу іконки
     const isRibbonOrCircle = !ribbonOrCircleIcons.has(iconKey);
 
-    // === ГОЛОВНА ЛОГІКА: textX, iconRenderX ===
     const textX = isRibbonOrCircle
       ? 136 + ((iconConfig?.width || 0) * (iconConfig?.scale2 || 1)) + 20
       : 136;
@@ -44,25 +41,56 @@ function B7({ params }) {
       ? 136
       : 95.5 - (iconConfig?.width || 0) * (iconConfig?.scale2 || 1) / 2;
 
-    // Решта як було
     const badgeGroupWidth = getRouteBadgeGroupWidth({ ...params, ...item });
     const availableTextWidthMain = 600 - 28 - textX - badgeGroupWidth;
     const availableTextWidthSecondary = 481;
 
-    const layout = computeB4TextLayout({
+    return {
       ...params,
       ...item,
       textX,
+      iconRenderX,
       availableTextWidthMain,
       availableTextWidthSecondary,
-    });
-
-    const hasTwoLines = layout.mainTextLines.length > 1;
-    const itemHeight = hasTwoLines ? 150 : 100;
-
-    return { layout, itemHeight, textX, iconRenderX };
+    };
   });
 
+  // === 2. Вираховуємо карту вирівнювання X і уніфікований розмір шрифту ===
+  const alignedTextXMap = getAlignedTextXMap(baseParamsArray);
+
+  let forcedFontSize1 = null;
+  if (params.forceUniformTextSize) {
+    // Усі item-и з узгодженим X
+    const withAligned = baseParamsArray.map((item, index) => ({
+      ...item,
+      ...(alignedTextXMap.has(index) && {
+        alignedTextX: alignedTextXMap.get(index),
+      }),
+    }));
+    forcedFontSize1 = getMinimalFontSizeAcrossB4Items(withAligned);
+  }
+
+  // === 3. Генеруємо фінальні layout-и з уніфікацією ===
+  const layouts = baseParamsArray.map((item, i) => {
+    const finalParams = {
+      ...item,
+      ...(alignedTextXMap.has(i) && {
+        alignedTextX: alignedTextXMap.get(i),
+      }),
+      ...(forcedFontSize1 && { forcedFontSize1 }),
+    };
+    const layout = computeB4TextLayout(finalParams);
+    const hasTwoLines = layout.mainTextLines.length > 1;
+    const itemHeight = hasTwoLines ? 150 : 100;
+    return {
+      layout,
+      itemHeight,
+      textX: item.textX,
+      iconRenderX: item.iconRenderX,
+    };
+  });
+
+  // === 4. Координати Y і розміри ===
   const baseY = 200;
   const itemY = layouts.reduce(
     (acc, curr, i) => {
@@ -71,50 +99,25 @@ function B7({ params }) {
     },
     []
   );
-
   const totalHeight = 290 + layouts.reduce((sum, l) => sum + l.itemHeight, 0);
   const showBlackLine = params.tableType === "temporary";
 
-  let alignedTextXMap = new Map();
-  let forcedFontSize1 = null;
-
-  if (items.length) {
-    const baseParams = items.map((item) => ({
-      ...params,
-      ...item,
-    }));
-
-    alignedTextXMap = getAlignedTextXMap(baseParams);
-
-    if (params.forceUniformTextSize) {
-      const withAligned = baseParams.map((item, index) => ({
-        ...item,
-        ...(alignedTextXMap.has(index)
-          ? { alignedTextX: alignedTextXMap.get(index) }
-          : {}),
-      }));
-
-      forcedFontSize1 = getMinimalFontSizeAcrossB4Items(withAligned);
-    }
-  }
-
+  // === 5. "km" текст ===
   const kmText = useMemo(() => {
     return textToPath(
       roadUABold,
       "km",
       23,
-      63, //41.5
+      63,
       240,
       "right",
       "visualx"
     );
-  });
+  }, []);
 
+  // === 6. Рендер ===
   return (
     <svg width={600} height={totalHeight} xmlns="http://www.w3.org/2000/svg">
-
-
-
       {/* Зовнішня біла рамка */}
       <RectRenderer
         config={{
@@ -129,19 +132,9 @@ function B7({ params }) {
         innerColor="#FFFFFF"
       />
 
-
-      {/* <rect x={10} y={200} width={9} height={490} fill={"blue"} />
-      <rect x={64} y={200} width={9} height={490} fill={"blue"} />
-      <rect x={118} y={200} width={18} height={490} fill={"green"} />
-      <rect x={10} y={200} width={126} height={40} fill={"red"} /> */}
-      
-
       <path d={kmText} fill="black" />
 
-
-
-
-      {/* B7Item з усіма параметрами */}
+      {/* B7Item з уніфікованими параметрами */}
       {items.map((itemParams, index) => {
         const isFirst = index === 0;
         const isLast = index === items.length - 1;
@@ -158,7 +151,7 @@ function B7({ params }) {
             itemHeight={layouts[index].itemHeight}
             layout={layouts[index].layout}
             textX={layouts[index].textX}
-            iconRenderX={layouts[index].iconRenderX} // ← Додаємо!
+            iconRenderX={layouts[index].iconRenderX}
             params={{
               ...params,
               ...itemParams,
