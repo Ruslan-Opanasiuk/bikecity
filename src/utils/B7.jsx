@@ -130,9 +130,9 @@ function B7({ params }) {
       roadUABold,
       "km",
       23,
-      63,
+      41.5, //41.5.  64
       240,
-      "right",
+      "center",
       "visualx"
     );
   }, []);
@@ -153,6 +153,11 @@ function B7({ params }) {
         outerColor="#FFFFFF"
         innerColor="#FFFFFF"
       />
+
+      {/* <rect x={10} y={200} width={9} height={490} fill={"blue"} />
+      <rect x={64} y={200} width={9} height={490} fill={"blue"} />
+      <rect x={118} y={200} width={18} height={490} fill={"green"} />
+      <rect x={10} y={200} width={126} height={40} fill={"red"} /> */}
 
       <path d={kmText} fill="black" />
 

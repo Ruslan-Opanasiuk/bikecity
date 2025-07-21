@@ -99,9 +99,9 @@ function B7Item({
       roadUABold,
       params.distance,
       23,
-      63,
+      41.5,
       50,
-      "right",
+      "center",
       "visualX"
     );
   });
