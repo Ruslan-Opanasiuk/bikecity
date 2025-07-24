@@ -9,16 +9,16 @@ import CircleConfigs from "../config/CircleConfigs";
 import boldData from "../utils/export/RoadUA-Bold.ttf.base64?raw";
 import mediumData from "../utils/export/RoadUA-Medium.ttf.base64?raw";
 
-// === [0] КОНСТАНТИ ТА ЗАВАНТАЖЕННЯ ШРИФТІВ ===
+// --- Завантаження шрифтів та глобальні константи ---
 const BASE_FONT_SIZE_PRIMARY = 38;
-
 const boldBuf = Uint8Array.from(atob(boldData), (c) => c.charCodeAt(0)).buffer;
 const mediumBuf = Uint8Array.from(atob(mediumData), (c) => c.charCodeAt(0)).buffer;
 const roadUABold = opentype.parse(boldBuf);
 const roadUAMedium = opentype.parse(mediumBuf);
 
-// === [1] КОМПОНЕНТ ОДНОГО ЕЛЕМЕНТА B7 ===
-
+/**
+ * Компонент для рендерингу одного рядка (об'єкта) на знаку B7.
+ */
 function B7Item({
   params,
   x = 0,
@@ -26,171 +26,118 @@ function B7Item({
   transform,
   isFirst,
   isLast,
-  index,
-  itemHeight,     // ← приймаємо!
-  layout,         // ← приймаємо!
+  itemHeight,
+  layout,
   textX,
   iconRenderX
 }) {
-  const isTemporaryRoute = params.isTemporaryRoute === true;
-  const TEMP_COLOR = "#F5C30D";
+  // --- Кольори та константи ---
+  const TEMP_COLOR = "#F5C30D";    // Жовтий для сезонних
+  const REGIONAL_COLOR = "#D42E12"; // Червоний для регіональних
+  const BLACK_COLOR = "#000000";   // Чорний за замовчуванням
+  const WHITE_COLOR = "#FFFFFF";
 
+  // --- Обчислення станів та логіки ---
+  const isTemporaryRoute = params.isTemporaryRoute === true;
+  const isSeasonal = params.tableType === "seasonal";
+
+  // Визначаємо акцентний колір з урахуванням пріоритетів
+  const accentColor = isSeasonal ? TEMP_COLOR : (params.numberType === "regional" ? REGIONAL_COLOR : BLACK_COLOR);
+  
   let iconKey = params.icon;
   if (iconKey === "streetNetwork" && params.isUrbanCenter) {
     iconKey = "cityCentre";
   }
-  const isVeloRoute = iconKey === "bicycleRoute";
-  const iconConfig = iconKey ? PathConfigs[iconKey] : null;
 
+  const iconConfig = iconKey ? PathConfigs[iconKey] : null;
   const ribbonIcons = new Set(["cityCentre", "bridge", "interchange", "bicycleRoute"]);
   const isRibbonIcon = ribbonIcons.has(iconKey);
-  const useDefaultCircleIcon = !isRibbonIcon;
+  const shouldHaveColoredDot = !isRibbonIcon;
 
-
-
-  // ==== Використовуємо готовий layout ====
+  // --- Розрахунок SVG-шляхів для тексту (мемоізовано) ---
   const {
     mainTextLines,
     secondaryLine,
     fontSize1,
     fontSize2,
-    applyYShift,
     waveCount,
     waveWidth,
     routeBadgeX,
   } = layout;
 
-  // === [3] ГЕНЕРАЦІЯ ОСНОВНОГО ТЕКСТУ (верхній/верхні рядки) ===
   const mainTextPaths = useMemo(() => {
     return mainTextLines.map((line, i) => {
-      const baselineY =
-        mainTextLines.length === 1
-          ? 50 - BASE_FONT_SIZE_PRIMARY / 2
-          : i === 0
-          ? 50 - BASE_FONT_SIZE_PRIMARY / 2
-          : 100 - BASE_FONT_SIZE_PRIMARY / 2;
-      return textToPath(
-        roadUABold,
-        line,
-        fontSize1,
-        textX,
-        baselineY,
-        "left",
-        "visualX"
-      );
+      const baselineY = mainTextLines.length === 1 ? 50 - BASE_FONT_SIZE_PRIMARY / 2 : (i === 0 ? 50 - BASE_FONT_SIZE_PRIMARY / 2 : 100 - BASE_FONT_SIZE_PRIMARY / 2);
+      return textToPath(roadUABold, line, fontSize1, textX, baselineY, "left", "visualX");
     });
-  }, [mainTextLines.join("|"), fontSize1, textX, applyYShift]);
+  }, [mainTextLines, fontSize1, textX]);
 
   const secondaryPath = useMemo(() => {
     const baselineY = mainTextLines.length === 1 ? 75 : 125;
-    return textToPath(
-      roadUAMedium,
-      secondaryLine,
-      fontSize2,
-      textX,
-      baselineY,
-      "left",
-      "visualX"
-    );
-  }, [secondaryLine, fontSize2, textX, mainTextLines.length, applyYShift]);
+    return textToPath(roadUAMedium, secondaryLine, fontSize2, textX, baselineY, "left", "visualX");
+  }, [secondaryLine, fontSize2, textX, mainTextLines.length]);
 
   const kmTextPath = useMemo(() => {
-    return textToPath(
-      roadUABold,
-      params.distance,
-      23,
-      41.5,
-      50,
-      "center",
-      "visualX"
-    );
-  });
+    return textToPath(roadUABold, params.distance, 23, 41.5, 50, "center", "visualX");
+  }, [params.distance]);
   
+  // Визначаємо конфігурацію для круглої іконки
+  const circleProps = useMemo(() => {
+    let config = CircleConfigs["B7"];
+    if (iconKey === "bicycleRoute") config = CircleConfigs["B7bicycle"];
+    else if (iconKey === "cityCentre") config = CircleConfigs["B7citycentre"];
+    else if (iconKey === "interchange") config = CircleConfigs["B7interchange"];
+    
+    return {
+      config,
+      outerColor: BLACK_COLOR,
+      innerColor: shouldHaveColoredDot ? accentColor : WHITE_COLOR,
+      cx: 95.5,
+      cy: 50,
+    };
+  }, [iconKey, shouldHaveColoredDot, accentColor]);
 
-  const isSeasonal = params.tableType === "seasonal";
-
+  // --- Рендер компонента ---
   return (
     <g transform={transform || `translate(${x}, ${y})`}>
-      {/* [5.1] Тимчасове жовте тло */}
+      {/* Тимчасове жовте тло */}
       {isTemporaryRoute && (
         <rect x={10} y={0} width={580} height={itemHeight} fill={TEMP_COLOR} />
       )}
       
-      {/* {mainTextLines.length === 1 ? (
-        <rect x={91} y={0} width={481} height={100} fill="green" />
-      ) : (
-        <rect x={91} y={0} width={481} height={150} fill="gray" />
-      )}
-      {params.icon === "water" ? (<rect x={91} y={0} width={481} height={134} fill="red" />) : (<rect x={91} y={0} width={481} height={100} fill="none" />)} */}
-
-      {/* [5.2] Вертикальна лінія */}
+      {/* Вертикальна лінія */}
       <rect
         x={92.5}
         y={isFirst ? 41 : 0}
         width={6}
-        height={
-          isFirst
-            ?
-              layout.mainTextLines.length > 1
-                ? 109
-                :93
-            : isLast
-            ? 59
-            : itemHeight
-        }
-        fill={isSeasonal ? TEMP_COLOR : "#000000"}
+        height={isFirst ? (layout.mainTextLines.length > 1 ? 109 : 93) : (isLast ? 59 : itemHeight)}
+        fill={accentColor}
       />
 
+      {/* Основний текст (1 або 2 рядки) */}
+      {mainTextPaths.map((d, i) => <path key={i} d={d} fill={BLACK_COLOR} />)}
 
-      {/* [5.3] Основний текст (1 або 2 рядки) */}
-      {mainTextPaths.map((d, i) => (
-        <path key={i} d={d} fill="black" />
-      ))}
+      {/* Другорядний текст */}
+      <path d={secondaryPath} fill={BLACK_COLOR} />
 
-      {/* [5.4] Другорядний текст */}
-      <path d={secondaryPath} fill="black" />
+      {/* Текст відстані в кілометрах */}
+      <path d={kmTextPath} fill={BLACK_COLOR} />
 
-      <path d={kmTextPath} fill="black" />
+      {/* Кругла іконка-маркер */}
+      {isRibbonIcon || shouldHaveColoredDot ? (
+        <CircleRenderer {...circleProps} />
+      ) : null}
 
-      {/* [5.5] Веломаршрут — спеціальна кругла іконка */}
-      {(isVeloRoute || iconKey === "cityCentre" || iconKey === "interchange" || useDefaultCircleIcon) && (
-        <CircleRenderer
-          config={
-            isVeloRoute
-              ? CircleConfigs["B7bicycle"]
-              : iconKey === "cityCentre"
-              ? CircleConfigs["B7citycentre"]
-              : iconKey === "interchange"
-              ? CircleConfigs["B7interchange"]
-              : CircleConfigs["B7"]
-          }
-          outerColor="#000"
-          innerColor={
-            useDefaultCircleIcon && !isVeloRoute && iconKey !== "cityCentre" && iconKey !== "interchange"
-              ? isSeasonal
-                ? "#F5C30D"
-                : "#000000"
-              : "#fff"
-          }
-          cx={95.5}
-          cy={50}
-        />
-      )}
-
-      {/* [5.6] SVG-іконка */}
+      {/* SVG-іконка всередині маркера */}
       {iconConfig && (
-        <g
-          transform={`translate(${iconRenderX}, ${
-            50 - (iconConfig.height * iconConfig.scale2) / 2
-          }) scale(${iconConfig.scale2})`}
-        >
-          <path d={iconConfig.d} fill="#000" fillRule="evenodd" />
+        <g transform={`translate(${iconRenderX}, ${50 - (iconConfig.height * iconConfig.scale2) / 2}) scale(${iconConfig.scale2})`}>
+          <path d={iconConfig.d} fill={BLACK_COLOR} fillRule="evenodd" />
         </g>
       )}
 
-      {/* [5.8] Хвильки для води */}
+      {/* Хвильки для водних об'єктів */}
       {params.icon === "water" && (
-        <g transform={`translate(${textX}, ${100})`}>
+        <g transform={`translate(${textX}, 100)`}>
           {Array.from({ length: waveCount }).map((_, i) => (
             <path
               key={i}
@@ -202,12 +149,9 @@ function B7Item({
         </g>
       )}
 
-      {/* [5.9] Бейджі маршрутів (номери, типи тощо) */}
+      {/* Бейджі з номерами маршрутів */}
       <RouteBadgeGroup
-        params={{
-          ...params,
-          isTemporaryRoute,
-        }}
+        params={{ ...params, isTemporaryRoute }}
         x={routeBadgeX}
         y={mainTextLines.length === 1 ? 12 : 37}
       />

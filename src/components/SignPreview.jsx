@@ -12,6 +12,9 @@ function SignPreview({ signType, params, setSignSize, mode = "preview" }) {
   const wrapperRef = useRef(null);
   const [originalSize, setOriginalSize] = useState({ width: 0, height: 0 });
 
+  // 1. Визначаємо, чи потрібно застосовувати логіку зменшення
+  const shouldReduceSize = (signType === 'B2' || signType === 'B3') && params.isReduced;
+
   useEffect(() => {
     const handler = () => {
       const container = wrapperRef.current;
@@ -20,61 +23,75 @@ function SignPreview({ signType, params, setSignSize, mode = "preview" }) {
         if (svgEl) {
           const width = parseFloat(svgEl.getAttribute("width"));
           const height = parseFloat(svgEl.getAttribute("height"));
+
           if (!isNaN(width) && !isNaN(height)) {
+            // Завжди зберігаємо повний оригінальний розмір
             setOriginalSize({ width, height });
-            setSignSize?.({ width, height });
+
+            // 2. Повідомляємо UI про розмір (зменшений або повний)
+            setSignSize?.({
+              width: shouldReduceSize ? width / 2 : width,
+              height: shouldReduceSize ? height / 2 : height,
+            });
           }
         }
       }
     };
     requestAnimationFrame(handler);
-  }, [signType, params, setSignSize, mode]);
+  }, [signType, params, setSignSize, mode, shouldReduceSize]); // Додали shouldReduceSize в залежності
 
   if (!Component) {
     return <div>Тут буде прев’ю {signType}</div>;
   }
 
   const sign = <Component params={params} />;
-  const scale = 0.67;
+  const previewScale = 0.67;
 
   if (mode === 'export') {
-    // --- ПОВЕРНУЛИ СТАРУ ЛОГІКУ "ПІДКЛАДКИ" ---
+    // 3. Логіка для експорту
+    const exportScale = shouldReduceSize ? 0.5 : 1.0;
+    const finalWidth = originalSize.width * exportScale;
+    const finalHeight = originalSize.height * exportScale;
+    const border = 2; // Розмір рамки-підкладки
+    
     return (
       <div ref={wrapperRef}>
         {originalSize.width > 0 ? (
-          // Другий рендер: малюємо знак поверх чорної підкладки
           <svg
-            width={originalSize.width + 2}
-            height={originalSize.height + 2}
+            width={finalWidth + border}
+            height={finalHeight + border}
             xmlns="http://www.w3.org/2000/svg"
           >
             <rect
               x="0"
               y="0"
-              width={originalSize.width + 2}
-              height={originalSize.height + 2}
-              fill="#000" // Суцільна чорна заливка
-              rx="45"     // Заокруглені кути для підкладки
+              width={finalWidth + border}
+              height={finalHeight + border}
+              fill="#000"
+              rx={45 * exportScale} // Радіус кутів також масштабуємо
             />
-            <g transform="translate(1, 1)">{sign}</g>
+            {/* Масштабуємо сам знак всередині рамки */}
+            <g transform={`translate(${border / 2}, ${border / 2}) scale(${exportScale})`}>
+              {sign}
+            </g>
           </svg>
         ) : (
-          // Перший рендер: малюємо знак, щоб виміряти його розміри
-          sign
+          sign // Перший рендер для вимірювання
         )}
       </div>
     );
   } else {
-    // ---- ВЕРСІЯ ДЛЯ ПРЕВ'Ю (з тінню та масштабуванням) ----
+    // 4. Логіка для прев'ю (залишається незмінною)
+    // Вона завжди базується на повному originalSize, тому прев'ю не зменшується
     return (
       <div
         style={{
-          width: originalSize.width * scale,
-          height: originalSize.height * scale,
+          width: originalSize.width * previewScale,
+          height: originalSize.height * previewScale,
           filter: "drop-shadow(0 0 10px rgba(0,0,0,0.3))",
         }}
       >
-        <div ref={wrapperRef} style={{ transform: `scale(${scale})`, transformOrigin: "top left" }}>
+        <div ref={wrapperRef} style={{ transform: `scale(${previewScale})`, transformOrigin: "top left" }}>
           {sign}
         </div>
       </div>

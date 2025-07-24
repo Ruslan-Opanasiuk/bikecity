@@ -5,7 +5,6 @@ import SignPreview from "./components/SignPreview";
 import B1B7SettingsPanel from "./components/settings/B1B7SettingsPanel";
 import B4B7ItemsPanel from "./components/settings/B4B7ItemSettings";
 import ExportBlock from "./components/ExportBlock";
-// --- ЗМІНА 1: Імпортуємо exportPDF ---
 import { exportSVG, exportPNG, exportPDF } from "./utils/exportHelpers";
 import PathConfigs from "./config/PathConfigs";
 
@@ -18,14 +17,12 @@ import {
 
 const BicycleIconInFrame = () => {
   const icon = PathConfigs.bicycle;
-  const desiredWidth = 36; // Цільова ширина іконки
-  const boxSize = 48; // Розмір контейнера
+  const desiredWidth = 36;
+  const boxSize = 48;
 
-  // Розрахунок масштабу та кінцевих розмірів
   const scale = desiredWidth / icon.width;
   const finalHeight = icon.height * scale;
 
-  // Розрахунок зсуву для центрування
   const translateX = (boxSize - desiredWidth) / 2;
   const translateY = (boxSize - finalHeight) / 2;
   
@@ -36,16 +33,12 @@ const BicycleIconInFrame = () => {
       viewBox={`0 0 ${boxSize} ${boxSize}`} 
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Прямокутник-фон */}
       <rect 
         width={boxSize} 
         height={boxSize} 
         rx="7" 
         fill="#005187" 
-
       />
-      
-      {/* Група для трансформації іконки */}
       <g transform={`translate(${translateX}, ${translateY}) scale(${scale})`}>
         <path d={icon.d} fill="white" fillRule="evenodd"/>
       </g>
@@ -133,15 +126,12 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="grid grid-cols-1 lg:grid-cols-[165px_min-content_420px_200px] gap-4 px-4 max-w-screen-2xl mx-auto justify-center">
-        <div className="col-span-full py-6">
+      {/* --- ЗМІНА ТУТ: Додано items-start для вертикального вирівнювання --- */}
+      <main className="grid grid-cols-1 lg:grid-cols-[170px_min-content_450px_200px] gap-4 px-4 max-w-screen-2xl mx-auto justify-center items-start">
+        <div className="col-span-full p-4">
           <h1 className="text-[24px] font-bold text-left flex items-center gap-4">
-            {/* Вставляємо новий компонент іконки */}
             <BicycleIconInFrame />
-
-            <span>
-              Конструктор велосипедного маршрутного орієнтування
-            </span>
+            <span>Конструктор велосипедного маршрутного орієнтування</span>
           </h1>
         </div>
 
@@ -181,7 +171,6 @@ function App() {
           params={safeParams}
           exportSVG={exportSVG}
           exportPNG={exportPNG}
-          // --- ЗМІНА 2: Передаємо функцію в компонент ---
           exportPDF={exportPDF}
         />
       </main>

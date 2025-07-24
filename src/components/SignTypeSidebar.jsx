@@ -4,10 +4,10 @@ function SignTypeSidebar({ signType, setSignType }) {
 
   const renderGroup = (title, items) => (
     <div className="mb-6">
-      <h3 className="text-[11px] uppercase text-gray-500 font-medium mb-2">
+      <h3 className="text-[14px] text-gray-500 mb-2">
         {title}
       </h3>
-      <ul className="space-y-[2px]">
+      <ul className="space-y-[1px]">
         {items.map((type) => (
           <li key={type}>
             <button
@@ -32,9 +32,9 @@ function SignTypeSidebar({ signType, setSignType }) {
 
   return (
     <aside className="p-4 w-full">
-      <p className="text-[16px] font-bold mb-4">Вибір ВМО:</p>
-      {renderGroup("ВЕРТИКАЛЬНЕ ВМО", vertical)}
-      {renderGroup("ГОРИЗОНТАЛЬНЕ ВМО", horizontal)}
+      <h2 className="text-[16px] font-bold mb-0">Вибір ВМО:</h2>
+      {renderGroup("Вертикальне ВМО", vertical)}
+      {renderGroup("Горизонтальне ВМО", horizontal)}
     </aside>
   );
 }
