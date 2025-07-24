@@ -112,11 +112,11 @@ function B7Item({
   return (
     <g transform={transform || `translate(${x}, ${y})`}>
       {/* [5.1] Тимчасове жовте тло */}
-      {/* {isTemporaryRoute && (
+      {isTemporaryRoute && (
         <rect x={10} y={0} width={580} height={itemHeight} fill={TEMP_COLOR} />
       )}
       
-      {mainTextLines.length === 1 ? (
+      {/* {mainTextLines.length === 1 ? (
         <rect x={91} y={0} width={481} height={100} fill="green" />
       ) : (
         <rect x={91} y={0} width={481} height={150} fill="gray" />
@@ -133,7 +133,7 @@ function B7Item({
             ?
               layout.mainTextLines.length > 1
                 ? 109
-                : 59
+                :93
             : isLast
             ? 59
             : itemHeight

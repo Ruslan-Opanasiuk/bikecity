@@ -1,67 +1,63 @@
 import { useEffect, useState } from "react";
-import { saveAs } from "file-saver";
-import { createRoot } from "react-dom/client";
 
-import SignSelector from "./components/SignSelector";
+import SignTypeSidebar from "./components/SignTypeSidebar";
 import SignPreview from "./components/SignPreview";
 import B1B7SettingsPanel from "./components/settings/B1B7SettingsPanel";
 import B4B7ItemsPanel from "./components/settings/B4B7ItemSettings";
+import ExportBlock from "./components/ExportBlock";
+// --- ЗМІНА 1: Імпортуємо exportPDF ---
+import { exportSVG, exportPNG, exportPDF } from "./utils/exportHelpers";
+import PathConfigs from "./config/PathConfigs";
 
-// === Дефолтні об'єкти для B4/B7 ===
-const defaultB4Params = {
-  tableType: "permanent",
-  numberType: "none",
-  routeNumber: "",
-  direction: "straight",
-  forceUniformTextSize: false,
-  objectCount: 1,
-  b4Items: [
-    {
-      mainText: "",
-      subText: "",
-      direction: "straight",
-      routeNumber: "",
-      icon: "",
-      isTemporaryRoute: false,
-      isUrbanCenter: false,
-      forcedFontSize1: null,
-      alignedTextX: null,
-    },
-  ],
-};
+import {
+  defaultB1B3Params,
+  defaultB4Params,
+  defaultB7Params,
+} from "./config/defaultParams";
 
-const defaultB7Params = {
-  tableType: "permanent",
-  numberType: "none",
-  routeNumber: "",
-  direction: "straight",
-  forceUniformTextSize: false,
-  objectCount: 4,
-  b4Items: Array.from({ length: 4 }, () => ({
-    mainText: "",
-    subText: "",
-    direction: "straight",
-    routeNumber: "",
-    icon: "",
-    isTemporaryRoute: false,
-    isUrbanCenter: false,
-    forcedFontSize1: null,
-    alignedTextX: null,
-    distance: "",
-  })),
+
+const BicycleIconInFrame = () => {
+  const icon = PathConfigs.bicycle;
+  const desiredWidth = 36; // Цільова ширина іконки
+  const boxSize = 48; // Розмір контейнера
+
+  // Розрахунок масштабу та кінцевих розмірів
+  const scale = desiredWidth / icon.width;
+  const finalHeight = icon.height * scale;
+
+  // Розрахунок зсуву для центрування
+  const translateX = (boxSize - desiredWidth) / 2;
+  const translateY = (boxSize - finalHeight) / 2;
+  
+  return (
+    <svg 
+      width={boxSize} 
+      height={boxSize} 
+      viewBox={`0 0 ${boxSize} ${boxSize}`} 
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Прямокутник-фон */}
+      <rect 
+        width={boxSize} 
+        height={boxSize} 
+        rx="7" 
+        fill="#005187" 
+
+      />
+      
+      {/* Група для трансформації іконки */}
+      <g transform={`translate(${translateX}, ${translateY}) scale(${scale})`}>
+        <path d={icon.d} fill="white" fillRule="evenodd"/>
+      </g>
+    </svg>
+  );
 };
 
 function App() {
   const [signType, setSignType] = useState("B1");
-
-  const [b1b3Params, setB1b3Params] = useState({
-    tableType: "permanent",
-    numberType: "national",
-    routeNumber: "",
-    direction: "straight",
-  });
-
-  const [params, setParams] = useState(b1b3Params);
+  const [b1b3Params, setB1b3Params] = useState(defaultB1B3Params);
+  const [params, setParams] = useState(defaultB1B3Params);
+  const [signSize, setSignSize] = useState(null);
 
   const isB1toB3 = ["B1", "B2", "B3"].includes(signType);
   const isB4orB7 = ["B4", "B7"].includes(signType);
@@ -70,17 +66,10 @@ function App() {
   const enableDirection = isB1toB3 && signType !== "B2";
   const allowNoneOption = signType === "B4";
 
-  // === Головна логіка перемикання типу знака ===
   const handleSignTypeChange = (newType) => {
     setSignType(newType);
-
     if (["B1", "B2", "B3"].includes(newType)) {
-      setParams({
-        tableType: "permanent",
-        numberType: "national",
-        routeNumber: "",
-        direction: "straight",
-      });
+      setParams({ ...defaultB1B3Params });
     } else if (newType === "B4") {
       setParams({ ...defaultB4Params });
     } else if (newType === "B7") {
@@ -90,7 +79,6 @@ function App() {
     }
   };
 
-  // === Синхронізація обʼєктів для B7 (щоб не було out-of-range помилок) ===
   const setParamsAndStore = (newParams) => {
     if (signType === "B7") {
       const count = Math.max(1, Math.min(20, newParams.objectCount || 1));
@@ -106,18 +94,16 @@ function App() {
           isUrbanCenter: false,
           forcedFontSize1: null,
           alignedTextX: null,
-          distance: "", // ← ДОДАЙ ТУТ!
+          distance: "",
         };
       });
       newParams.b4Items = padded;
     }
-    setParams(newParams);
 
+    setParams(newParams);
     if (isB1toB3) setB1b3Params(newParams);
   };
 
-
-  // === Коректно підлаштовуємо numberType для B1-B3 ===
   const safeParams = {
     ...params,
     numberType:
@@ -126,14 +112,12 @@ function App() {
         : params.numberType,
   };
 
-  // === Оновлення окремого елемента B4/B7 ===
   const updateB4Item = (index, updatedItem) => {
     const updatedItems = [...(params.b4Items || [])];
     updatedItems[index] = updatedItem;
     setParams({ ...params, b4Items: updatedItems });
   };
 
-  // === Авто-відключення isTemporaryRoute якщо тип таблиці змінився ===
   useEffect(() => {
     if (params.tableType === "temporary") {
       const items = params.b4Items || [];
@@ -147,137 +131,43 @@ function App() {
     }
   }, [params.tableType]);
 
-  // ==== Експорт SVG / PNG як було ====
-  const renderForExport = async () => {
-    const container = document.createElement("div");
-    container.style.position = "absolute";
-    container.style.left = "-9999px";
-    document.body.appendChild(container);
-
-    return new Promise((resolve) => {
-      const root = createRoot(container);
-      root.render(
-        <SignPreview signType={signType} params={safeParams} mode="export" />
-      );
-      setTimeout(() => {
-        const svgNode = container.querySelector("svg");
-        resolve({ svgNode, root, container });
-      }, 100);
-    });
-  };
-
-  const handleExportSVG = async () => {
-    const { svgNode, root, container } = await renderForExport();
-    if (!svgNode) return;
-
-    const origW = svgNode.getAttribute("width");
-    const origH = svgNode.getAttribute("height");
-
-    const serializer = new XMLSerializer();
-    let source = serializer.serializeToString(svgNode);
-
-    if (!/xmlns=/.test(source)) {
-      source = source.replace(
-        "<svg",
-        '<svg xmlns="http://www.w3.org/2000/svg"'
-      );
-    }
-
-    source = source.replace(
-      /<svg([^>]*)>/,
-      `<svg$1 viewBox="0 0 ${origW} ${origH}">`
-    );
-
-    source = source
-      .replace(/width="(\d+)"/, 'width="$1mm"')
-      .replace(/height="(\d+)"/, 'height="$1mm"');
-
-    const blob = new Blob([source], {
-      type: "image/svg+xml;charset=utf-8",
-    });
-    saveAs(blob, `${signType}.svg`);
-
-    root.unmount();
-    document.body.removeChild(container);
-  };
-
-  const handleExportPNG = async () => {
-    await document.fonts.ready;
-    const { svgNode, root, container } = await renderForExport();
-    if (!svgNode) return;
-
-    const serializer = new XMLSerializer();
-    let source = serializer.serializeToString(svgNode);
-
-    if (!/xmlns=/.test(source)) {
-      source = source.replace(
-        "<svg",
-        '<svg xmlns="http://www.w3.org/2000/svg"'
-      );
-    }
-
-    const blob = new Blob([source], {
-      type: "image/svg+xml;charset=utf-8",
-    });
-    const url = URL.createObjectURL(blob);
-    const img = new Image();
-
-    img.onload = () => {
-      const widthMm = parseFloat(svgNode.getAttribute("width"));
-      const heightMm = parseFloat(svgNode.getAttribute("height"));
-
-      const scale = 3.7795;
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.round(widthMm * scale);
-      canvas.height = Math.round(heightMm * scale);
-
-      const ctx = canvas.getContext("2d");
-      ctx.scale(scale, scale);
-      ctx.drawImage(img, 0, 0);
-
-      URL.revokeObjectURL(url);
-      canvas.toBlob((pngBlob) => {
-        saveAs(pngBlob, `${signType}.png`);
-      });
-    };
-
-    img.onerror = (e) => {
-      console.error("Error loading SVG for PNG export", e);
-    };
-
-    img.src = url;
-
-    root.unmount();
-    document.body.removeChild(container);
-  };
-
-  // ==== JSX ====
   return (
-    <div className="min-h-screen bg-gray-50 text-center p-6">
-      <h1 className="text-3xl font-bold mb-6">
-        Конструктор велосипедного маршрутного орієнтування
-      </h1>
+    <div className="min-h-screen bg-gray-50">
+      <main className="grid grid-cols-1 lg:grid-cols-[165px_min-content_420px_200px] gap-4 px-4 max-w-screen-2xl mx-auto justify-center">
+        <div className="col-span-full py-6">
+          <h1 className="text-[24px] font-bold text-left flex items-center gap-4">
+            {/* Вставляємо новий компонент іконки */}
+            <BicycleIconInFrame />
 
-      <SignSelector signType={signType} setSignType={handleSignTypeChange} />
-
-      <div className="flex justify-between max-w-4xl mx-auto mb-6 p-4">
-        <div className="flex justify-end w-1/2 p-2">
-          <SignPreview signType={signType} params={safeParams} />
+            <span>
+              Конструктор велосипедного маршрутного орієнтування
+            </span>
+          </h1>
         </div>
 
-        <div className="flex flex-col gap-4 justify-start w-1/2 p-2">
+        <SignTypeSidebar
+          signType={signType}
+          setSignType={handleSignTypeChange}
+        />
+
+        <div className="p-4 flex justify-center items-start">
+          <SignPreview signType={signType} params={safeParams} setSignSize={setSignSize} />
+        </div>
+
+        <div className="p-4 flex flex-col gap-4">
           {usesB1B6Panel && (
             <B1B7SettingsPanel
-              label={`Налаштування ${signType}`}
+              label={`Налаштування ${signType}:`}
               params={safeParams}
               setParams={setParamsAndStore}
               enableDirection={enableDirection}
               allowNoneOption={allowNoneOption}
+              signSize={signSize}
             />
           )}
           {isB4orB7 && safeParams.b4Items && (
             <B4B7ItemsPanel
-              key={signType} // <-- це додатковий reset стану при зміні B4/B7
+              key={signType}
               items={safeParams.b4Items}
               setItemParams={(i, newItem) => updateB4Item(i, newItem)}
               tableType={safeParams.tableType}
@@ -285,22 +175,16 @@ function App() {
             />
           )}
         </div>
-      </div>
 
-      <div className="flex gap-4 justify-center">
-        <button
-          onClick={handleExportSVG}
-          className="bg-blue-600 text-white px-6 py-3 rounded shadow hover:bg-blue-700"
-        >
-          Експорт SVG
-        </button>
-        <button
-          onClick={handleExportPNG}
-          className="bg-green-600 text-white px-6 py-3 rounded shadow hover:bg-green-700"
-        >
-          Експорт PNG
-        </button>
-      </div>
+        <ExportBlock
+          signType={signType}
+          params={safeParams}
+          exportSVG={exportSVG}
+          exportPNG={exportPNG}
+          // --- ЗМІНА 2: Передаємо функцію в компонент ---
+          exportPDF={exportPDF}
+        />
+      </main>
     </div>
   );
 }
