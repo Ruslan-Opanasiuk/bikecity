@@ -270,7 +270,7 @@ function B4B7ItemSettings({
         }
       }}
       // 3. Оновлена підказка
-      placeholder="до 99,9 або до 999"
+      placeholder="Введіть значення від 0,1 до 999"
       className={inputClasses}
     />
   </FormRow>
