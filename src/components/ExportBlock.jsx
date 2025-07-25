@@ -4,7 +4,7 @@ function ExportBlock({ signType, params, exportSVG, exportPNG, exportPDF }) {
     "w-[50px] h-9 flex items-center justify-center rounded-md border-2 border-blue-600 bg-white text-blue-600 text-[13px] font-semibold hover:bg-blue-600 hover:text-white transition-colors";
 
   return (
-    <div className="p-4 w-full flex flex-col items-start">
+    <div className="w-full flex flex-col items-start">
       <h2 className="text-[16px] font-bold mb-0 text-left">
         Завантажити макет:
       </h2>

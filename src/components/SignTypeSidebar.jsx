@@ -31,7 +31,7 @@ function SignTypeSidebar({ signType, setSignType }) {
   );
 
   return (
-    <aside className="p-4 w-full">
+    <aside className="w-full">
       <h2 className="text-[16px] font-bold mb-0">Вибір ВМО:</h2>
       {renderGroup("Вертикальне ВМО", vertical)}
       {renderGroup("Горизонтальне ВМО", horizontal)}

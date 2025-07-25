@@ -118,7 +118,7 @@ function B1B7SettingsPanel({
   // --- Стилі ---
 
   // Змінено: основний текст - чорний, підказка - сіра
-  const inputStyles = "w-[250px] text-[13px] text-gray-900 font-normal placeholder:text-gray-500 [&[data-placeholder]]:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 data-[state=open]:ring-2 data-[state=open]:ring-blue-500";
+  const inputStyles = "w-full lg:w-[250px] text-[13px] text-gray-900 font-normal placeholder:text-gray-500 [&[data-placeholder]]:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 data-[state=open]:ring-2 data-[state=open]:ring-blue-500";
 
   // --- Рендер компонента ---
 
@@ -273,9 +273,9 @@ function B1B7SettingsPanel({
               const sliderThumbStyles = `[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-gray-400 [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:shadow-gray-300`;
 
               return (
-                // --- ЗМІНА ТУТ: Додано обгортку для вирівнювання ---
                 <div className="h-9 flex items-center">
-                  <div className="flex flex-col w-[250px]">
+                  {/* --- ЗМІНА ТУТ --- */}
+                  <div className="flex flex-col w-full lg:w-[250px]">
                     <input
                       type="range"
                       min={min}

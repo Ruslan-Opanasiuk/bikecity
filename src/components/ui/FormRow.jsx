@@ -1,10 +1,9 @@
-// /components/ui/FormRow.js
-
 const FormRow = ({ label, children }) => {
   return (
-    // Змінено 180px на 150px, щоб зменшити поле для назви
-    <div className="grid grid-cols-[150px_1fr] items-center gap-x-4">
-      <label className="text-right font-semibold text-[13px] text-gray-800 whitespace-nowrap">
+    // На мобільних: flex-col (мітка над полем)
+    // На великих екранах (lg): grid (мітка зліва від поля)
+    <div className="flex flex-col gap-1 lg:grid lg:grid-cols-[150px_1fr] lg:items-center lg:gap-x-4">
+      <label className="font-semibold text-[13px] text-gray-800 whitespace-nowrap text-left lg:text-right">
         {label}
       </label>
       <div className="w-full">
