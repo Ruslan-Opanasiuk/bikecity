@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import locationTerms from "../../config/locationTerms";
 import PathConfigs from "../../config/PathConfigs";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import {
   SelectItem,
   SelectValue,
 } from "../ui/select";
+import MultiColorPathConfigs from "../../config/MultiColorPathConfigs"; // Імпорт конфігурацій
+
 
 /**
  * Головний контейнер для налаштувань об'єктів на знаках B4 та B7.
@@ -95,6 +97,16 @@ function B4B7ItemsPanel({
 // ==============================================================================
 //  КОМПОНЕНТ ФОРМИ НАЛАШТУВАНЬ ДЛЯ ОДНОГО ОБ'ЄКТА
 // ==============================================================================
+
+// Допоміжний компонент для рендерингу багатоколірних іконок
+const MultiColorSignPreview = ({ config, size = 24 }) => (
+  <svg width={size} height={size} viewBox={config.viewBox}>
+    {config.paths.map((path, index) => (
+      <path key={index} d={path.d} fill={path.color} transform={path.transform || ''} fillRule={path.fillRule || 'nonzero'}/>
+    ))}
+  </svg>
+);
+
 
 /**
  * Форма з деталізованими налаштуваннями для одного об'єкта (одного рядка)
@@ -185,6 +197,16 @@ function B4B7ItemSettings({
   const shouldShowNameField = !isBicycleRoute && params.icon !== "cityCentre" && !["Центр міста", "Bеломаршрут"].includes(params.mainText);
   const inputClasses = "w-full lg:w-[250px] text-[13px] text-gray-900 font-normal placeholder:text-gray-500 [&[data-placeholder]]:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 data-[state=open]:ring-2 data-[state=open]:ring-blue-500";
   
+  const warningSignOptions = [
+    { value: 'roadWorks', label: 'Дорожні роботи' },
+    { value: 'unevenRoad', label: 'Нерівна дорога' },
+    { value: 'pothole', label: 'Вибоїна' },
+    { value: 'dangerAhead', label: 'Аварійна ділянка' },
+    { value: 'noEntry', label: 'Рух заборонено' },
+    { value: 'noCycling', label: 'Велорух заборонено' },
+    { value: 'doNotEnter', label: 'В\'їзд заборонено' },
+  ];
+  
   // --- Рендер компонента ---
 
   return (
@@ -266,7 +288,7 @@ function B4B7ItemSettings({
       {/* Поле для номера маршруту або назви об'єкта */}
       {isBicycleRoute && (
         <FormRow label="Номер маршруту:">
-          <Input inputMode="numeric" pattern="\d*" value={params.routeNumber || ""} onChange={handleRouteNumberChange} placeholder="1-99" className={inputClasses} />
+          <Input inputMode="numeric" pattern="\d*" value={params.routeNumber || ""} onChange={handleRouteNumberChange} placeholder="Введіть цифру від 1 до 99" className={inputClasses} />
         </FormRow>
       )}
       {!isBicycleRoute && shouldShowNameField && (
@@ -282,7 +304,47 @@ function B4B7ItemSettings({
         </FormRow>
       )}
 
-      {/* Блок з додатковими іконками — переміщено вище */}
+      {/* Перемикач "Тимчасовий маршрут" */}
+      {tableType !== "temporary" && !(isB7 && tableType === "seasonal") && (
+        <FormRow label="">
+          <label htmlFor="isTemporaryRoute" className="inline-flex items-center cursor-pointer gap-3">
+            <div className="relative">
+              <input type="checkbox" id="isTemporaryRoute" className="sr-only peer" checked={params.isTemporaryRoute || false} onChange={handleTemporaryRouteToggle}/>
+              <div className="w-7 h-4 bg-gray-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:bg-blue-600"></div>
+              <div className="absolute left-0.5 top-0.5 bg-white border-gray-300 border rounded-full h-3 w-3 transition-transform peer-checked:translate-x-3"></div>
+            </div>
+            <span className="text-[13px] text-gray-700">Тимчасовий маршрут</span>
+          </label>
+        </FormRow>
+      )}
+      
+      {/* УМОВНИЙ БЛОК ДЛЯ ВИБОРУ ПОПЕРЕДЖУВАЛЬНОГО ЗНАКУ */}
+      {params.isTemporaryRoute && (
+        <FormRow label="Застережний знак:">
+          <Select
+            value={params.warningSignType || ''} // Головна зміна тут
+            onValueChange={(value) => setParams({ ...params, warningSignType: value === 'none' ? null : value })}
+          >
+            <SelectTrigger className={inputClasses}>
+              <SelectValue placeholder="Виберіть знак" />
+            </SelectTrigger>
+            <SelectContent>
+              {warningSignOptions.map(option => (
+                <SelectItem key={option.value} value={option.value} className="text-[13px]">
+                  <div className="flex items-center gap-2">
+                    {option.value !== 'none' && MultiColorPathConfigs[option.value] && (
+                      <MultiColorSignPreview config={MultiColorPathConfigs[option.value]} />
+                    )}
+                    <span>{option.label}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormRow>
+      )}
+
+      {/* Блок з додатковими іконками */}
       <FormRow label="Додаткові позначки:">
         <div className="flex border rounded-md overflow-hidden w-fit">
           {[
@@ -305,12 +367,7 @@ function B4B7ItemSettings({
                   setParams({ ...params, [key]: !params[key] });
                 }}
               >
-                <svg
-                  width={20}
-                  height={20}
-                  viewBox={`0 0 ${icon.width} ${icon.height}`}
-                  className={`mx-auto ${isActive ? 'text-white' : 'text-gray-700'}`}
-                >
+                <svg width={20} height={20} viewBox={`0 0 ${icon.width} ${icon.height}`} className={`mx-auto ${isActive ? 'text-white' : 'text-gray-700'}`}>
                   <path d={icon.d} fill="currentColor" fillRule="evenodd" />
                 </svg>
               </button>
@@ -318,31 +375,11 @@ function B4B7ItemSettings({
           })}
         </div>
       </FormRow>
-
-      {/* Перемикач "Тимчасовий маршрут" */}
-      {tableType !== "temporary" && !(isB7 && tableType === "seasonal") && (
-        <FormRow label="">
-          <label htmlFor="isTemporaryRoute" className="inline-flex items-center cursor-pointer gap-3">
-            <div className="relative">
-              <input
-                type="checkbox"
-                id="isTemporaryRoute"
-                className="sr-only peer"
-                checked={params.isTemporaryRoute || false}
-                onChange={handleTemporaryRouteToggle}
-              />
-              <div className="w-7 h-4 bg-gray-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:bg-blue-600"></div>
-              <div className="absolute left-0.5 top-0.5 bg-white border-gray-300 border rounded-full h-3 w-3 transition-transform peer-checked:translate-x-3"></div>
-            </div>
-            <span className="text-[13px] text-gray-700">Тимчасовий маршрут</span>
-          </label>
-        </FormRow>
-      )}
-
-
     </div>
   );
 }
+
+// B4B7ItemSettings.directionLayout - залишається без змін
 
 B4B7ItemSettings.directionLayout = {
   straight: { rotation: 0 }, left: { rotation: -90 }, right: { rotation: 90 },

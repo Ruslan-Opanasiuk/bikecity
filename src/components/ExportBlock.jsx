@@ -9,7 +9,7 @@ function ExportBlock({ signType, params, exportSVG, exportPNG, exportPDF }) {
         Завантажити макет:
       </h2>
 
-      <p className="text-[14px] mb-2 text-gray-500">
+      <p className="text-[14px] mb-8 text-gray-500">
         в масштабі <span className="text-black">1:1</span>
       </p>
 

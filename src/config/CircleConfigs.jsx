@@ -20,7 +20,7 @@ const CircleConfigs = {
     strokeWidth: 4
   },
   B7citycentre: {
-    outerRadius: 23,
+    outerRadius: 22.5,
     strokeWidth: 0
   },
   B7interchange: {

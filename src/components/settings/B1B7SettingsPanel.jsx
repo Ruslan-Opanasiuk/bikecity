@@ -45,11 +45,29 @@ function B1B7SettingsPanel({
   // --- Обробники подій ---
 
   const handleTableTypeChange = (value) => {
-    let numberType = params.numberType;
-    if (value === "seasonal" && numberType === "national") numberType = "regional";
-    if (value !== "permanent" && numberType === "eurovelo") numberType = "regional";
-    setParams({ ...params, tableType: value, numberType });
-  };
+      // Створюємо копію поточних параметрів, щоб їх змінювати
+      const newParams = { ...params, tableType: value };
+
+      // Ваша існуюча логіка для numberType
+      if (value === "seasonal" && newParams.numberType === "national") {
+        newParams.numberType = "regional";
+      }
+      if (value !== "permanent" && newParams.numberType === "eurovelo") {
+        newParams.numberType = "regional";
+      }
+
+      // --- НОВА ЛОГІКА: Скидаємо статус isTemporaryRoute для всіх об'єктів ---
+      if (newParams.b4Items) {
+        newParams.b4Items = newParams.b4Items.map(item => ({
+          ...item,
+          isTemporaryRoute: false,
+          warningSignType: null, // <-- ДОДАЙТЕ ЦЕЙ РЯДОК
+        }));
+      }
+
+      // Зберігаємо всі оновлені параметри
+      setParams(newParams);
+    };
 
   const handleNumberTypeChange = (value) => {
     const routeNumber = value === "eurovelo" ? "4" : value === "none" ? "" : params.routeNumber;
@@ -126,29 +144,17 @@ function B1B7SettingsPanel({
     <div className="p-0 w-full">
       <h2 className="text-[16px] font-bold mb-0 text-left">
         {label}
-        {/* Додаємо повну назву знаку */}
         <span className="text-[15px] font-bold ml-1">{signNames[signType]}</span>
       </h2>
 
       {signSize && (
-        // 1. Створюємо flex-контейнер для розміщення елементів в рядку
-        <div className="flex justify-between items-center mb-2">
-          
-          {/* Ліва частина: Розмір знаку */}
-          <p className="text-[14px] text-gray-500">
-            розмір знаку:{" "}
-            <span className="text-black">
-              {Math.round(signSize.width)}x{Math.round(signSize.height)} мм
-            </span>
-          </p>
-
-          {/* Права частина: Додатковий текст (тільки для B1) */}
-          {signType === 'B1' && (
-            <p className="text-[14px] text-gray-500">
-              (табличка до дорожніх знаків)
-            </p>
-          )}
-        </div>
+        <p className="text-[14px] mb-2 text-gray-500 mb-8">
+          {/* Змінено: текст залежить від типу знаку */}
+          {signType === 'B1' ? 'розмір таблички:' : 'розмір знаку:'}{" "}
+          <span className="text-black">
+            {Math.round(signSize.width)}x{Math.round(signSize.height)} мм
+          </span>
+        </p>
       )}
 
       <div className="space-y-2">
@@ -204,7 +210,7 @@ function B1B7SettingsPanel({
                   return (
                     <SelectItem key={value} value={value} className="text-[13px]">
                       <div className="flex items-center gap-2">
-                        <svg width={24} height={24} viewBox={`0 0 ${icon.width} ${icon.height}`} className="text-gray-700">
+                        <svg width={20} height={20} viewBox={`0 0 ${icon.width} ${icon.height}`} className="text-gray-700">
                           <path d={icon.d} fill="currentColor" fillRule="evenodd" transform={`rotate(${rotation} ${icon.width / 2} ${icon.height / 2}) scale(${icon.scale})`}/>
                         </svg>
                         <span>{label}</span>
@@ -231,7 +237,7 @@ function B1B7SettingsPanel({
                 <div className="w-7 h-4 bg-gray-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:bg-blue-600"></div>
                 <div className="absolute left-0.5 top-0.5 bg-white border-gray-300 border rounded-full h-3 w-3 transition-transform peer-checked:translate-x-3"></div>
               </div>
-              <span className="text-[13px] text-gray-700">Зменшення знаку</span>
+              <span className="text-[13px] text-gray-700">Зменшення знаку для наліпок</span>
             </label>
           </FormRow>
         )}
@@ -273,7 +279,7 @@ function B1B7SettingsPanel({
               const sliderThumbStyles = `[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-gray-400 [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:shadow-gray-300`;
 
               return (
-                <div className="h-9 flex items-center">
+                <div className="h-9 pt-3.5">
                   {/* --- ЗМІНА ТУТ --- */}
                   <div className="flex flex-col w-full lg:w-[250px]">
                     <input

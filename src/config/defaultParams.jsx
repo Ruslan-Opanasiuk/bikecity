@@ -47,5 +47,6 @@ export const defaultB7Params = {
     forcedFontSize1: null,
     alignedTextX: null,
     distance: "",
+    warningSignType: null
   })),
 };
