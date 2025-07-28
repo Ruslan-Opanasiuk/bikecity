@@ -1,3 +1,4 @@
+import React, { useMemo } from "react";
 import PathConfigs from "../../config/PathConfigs";
 import { Input } from "@/components/ui/input";
 import FormRow from "../ui/FormRow";
@@ -9,11 +10,6 @@ import {
   SelectValue,
 } from "../ui/select";
 
-/**
- * Компонент панелі налаштувань для знаків B1-B7.
- * Керує загальними параметрами знаку, а також відображає
- * специфічні налаштування для B4 та B7.
- */
 function B1B7SettingsPanel({
   label,
   params,
@@ -24,8 +20,6 @@ function B1B7SettingsPanel({
   const isB4 = label.includes("B4");
   const isB7 = label.includes("B7");
 
-  // --- Константи для налаштувань ---
-
   const directionOptions = [
     { value: "straight", label: "Прямо", icon: PathConfigs.smallArrow },
     { value: "left", label: "Ліворуч", icon: PathConfigs.smallArrow },
@@ -35,39 +29,18 @@ function B1B7SettingsPanel({
   ];
 
   const directionRotation = {
-    straight: 0,
-    left: -90,
-    right: 90,
-    "straight-left": -45,
-    "straight-right": 45,
+    straight: 0, left: -90, right: 90, "straight-left": -45, "straight-right": 45,
   };
 
-  // --- Обробники подій ---
-
   const handleTableTypeChange = (value) => {
-      // Створюємо копію поточних параметрів, щоб їх змінювати
-      const newParams = { ...params, tableType: value };
-
-      // Ваша існуюча логіка для numberType
-      if (value === "seasonal" && newParams.numberType === "national") {
-        newParams.numberType = "regional";
-      }
-      if (value !== "permanent" && newParams.numberType === "eurovelo") {
-        newParams.numberType = "regional";
-      }
-
-      // --- НОВА ЛОГІКА: Скидаємо статус isTemporaryRoute для всіх об'єктів ---
-      if (newParams.b4Items) {
-        newParams.b4Items = newParams.b4Items.map(item => ({
-          ...item,
-          isTemporaryRoute: false,
-          warningSignType: null, // <-- ДОДАЙТЕ ЦЕЙ РЯДОК
-        }));
-      }
-
-      // Зберігаємо всі оновлені параметри
-      setParams(newParams);
-    };
+    const newParams = { ...params, tableType: value };
+    if (value === "seasonal" && newParams.numberType === "national") newParams.numberType = "regional";
+    if (value !== "permanent" && newParams.numberType === "eurovelo") newParams.numberType = "regional";
+    if (newParams.b4Items) {
+      newParams.b4Items = newParams.b4Items.map(item => ({ ...item, isTemporaryRoute: false, warningSignType: null }));
+    }
+    setParams(newParams);
+  };
 
   const handleNumberTypeChange = (value) => {
     const routeNumber = value === "eurovelo" ? "4" : value === "none" ? "" : params.routeNumber;
@@ -82,19 +55,11 @@ function B1B7SettingsPanel({
     setParams({ ...params, routeNumber: value });
   };
 
-  const handleDirectionChange = (value) => {
-    setParams({ ...params, direction: value });
-  };
-  
+  const handleDirectionChange = (value) => setParams({ ...params, direction: value });
   const handleRouteCountChange = (count) => {
-    const newItems = Array.from({ length: count }, (_, i) => {
-      return params.b4Items?.[i] || {
-        mainText: "",
-        subText: "",
-        direction: "straight",
-        routeNumber: "",
-      };
-    });
+    const newItems = Array.from({ length: count }, (_, i) => (
+      params.b4Items?.[i] || { mainText: "", subText: "", direction: "straight", routeNumber: "" }
+    ));
     setParams({ ...params, b4Items: newItems });
   };
 
@@ -103,8 +68,6 @@ function B1B7SettingsPanel({
     const clamped = Math.max(4, Math.min(value, 16));
     setParams({ ...params, objectCount: clamped });
   };
-
-  // --- Допоміжні функції ---
 
   const getNumberTypeOptions = () => {
     const options = [];
@@ -121,41 +84,73 @@ function B1B7SettingsPanel({
     }
     return options;
   };
-
+  
+  // --- ЗМІНА 1: Розширено об'єкт назв ---
   const signNames = {
     B1: "Номер і напрямок веломаршруту",
     B2: "Кінець веломаршруту",
     B3: "Номер і напрямок веломаршруту",
-    B4: "Покажчик І-ІІІ напрямків",
+    B4: "Покажчик I напрямку",
+    B5: "Покажчик IІ напрямків",
+    B6: "Покажчик IІІ напрямків",
     B7: "Схема веломаршруту",
   };
 
-  // Витягуємо тип знаку з назви для зручності
-  const signType = label.split(' ')[1].replace(':', '');
+  // --- ЗМІНА 2: Додано логіку для динамічного заголовка ---
+  const { displayLabel, displaySignName } = useMemo(() => {
+    const baseSignType = label.split(' ')[1].replace(':', '');
+    
+    if (baseSignType === 'B4' && params.b4Items) {
+      const itemCount = params.b4Items.length;
+      let effectiveSign = { type: 'B.4', name: signNames['B4'] }; // За замовчуванням
+      
+      switch (itemCount) {
+        case 2:
+          effectiveSign = { type: 'B.5', name: signNames['B5'] };
+          break;
+        case 3:
+          effectiveSign = { type: 'B.6', name: signNames['B6'] };
+          break;
+        default:
+          effectiveSign = { type: 'B.4', name: signNames['B4'] };
+      }
+      return {
+        displayLabel: `Налаштування ${effectiveSign.type}:`,
+        displaySignName: effectiveSign.name
+      };
 
-  // --- Стилі ---
+    } else {
+      // Логіка для всіх інших знаків (B1, B2, B3, B7)
+      const dottedSignType = baseSignType ? `B.${baseSignType.slice(1)}` : '';
+      return {
+        displayLabel: `Налаштування ${dottedSignType}:`,
+        displaySignName: signNames[baseSignType]
+      };
+    }
+  }, [label, params.b4Items, signNames]);
 
-  // Змінено: основний текст - чорний, підказка - сіра
+
   const inputStyles = "w-full lg:w-[250px] text-[13px] text-gray-900 font-normal placeholder:text-gray-500 [&[data-placeholder]]:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 data-[state=open]:ring-2 data-[state=open]:ring-blue-500";
-
-  // --- Рендер компонента ---
 
   return (
     <div className="p-0 w-full">
+      {/* --- ЗМІНА 3: Оновлено JSX для відображення заголовка --- */}
       <h2 className="text-[16px] font-bold mb-0 text-left">
-        {label}
-        <span className="text-[15px] font-bold ml-1">{signNames[signType]}</span>
+        {displayLabel}
+        <span className="text-[15px] font-normal ml-1">{displaySignName}</span>
       </h2>
-
+      
       {signSize && (
-        <p className="text-[14px] mb-2 text-gray-500 mb-8">
-          {/* Змінено: текст залежить від типу знаку */}
-          {signType === 'B1' ? 'розмір таблички:' : 'розмір знаку:'}{" "}
-          <span className="text-black">
-            {Math.round(signSize.width)}x{Math.round(signSize.height)} мм
-          </span>
-        </p>
+        <div className="flex justify-between items-center mb-8">
+          <p className="text-[14px] text-gray-500">
+            {label.includes('B1') ? 'розмір таблички:' : 'розмір знаку:'}{" "}
+            <span className="text-black">
+              {Math.round(signSize.width)}x{Math.round(signSize.height)} мм
+            </span>
+          </p>
+        </div>
       )}
+
 
       <div className="space-y-2">
         {/* --- Основні налаштування --- */}

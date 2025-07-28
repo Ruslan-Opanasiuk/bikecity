@@ -2,8 +2,22 @@ function SignTypeSidebar({ signType, setSignType }) {
   const vertical = ["B1", "B2", "B3", "B4", "B7"];
   const horizontal = ["Г1"];
 
+    const formatSignType = (type) => {
+      // Спеціальне правило для B4
+      if (type === 'B4') {
+        return 'B.4-B.6';
+      }
+      // Правило для інших знаків "B"
+      if (type.startsWith('B')) {
+        return `B.${type.slice(1)}`;
+      }
+      // Повертаємо як є, якщо це не знак "B" (напр., "Г1")
+      return type;
+    };
+
+
   const renderGroup = (title, items) => (
-    <div className="mb-6">
+    <div className="mb-6 last:mb-0" >
       <h3 className="text-[14px] text-gray-500 mb-2">
         {title}
       </h3>
@@ -21,7 +35,7 @@ function SignTypeSidebar({ signType, setSignType }) {
                     : ""
                 }`}
               >
-                {type}
+                {formatSignType(type)}
               </span>
             </button>
           </li>

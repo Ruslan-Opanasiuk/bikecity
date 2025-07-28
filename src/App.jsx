@@ -86,13 +86,19 @@ function App() {
       {/* --- ЗМІНА: Повертаємо все в єдиний Grid-макет --- */}
       <main className="grid grid-cols-1 lg:grid-cols-[170px_min-content_450px_200px] gap-4 max-w-screen-2xl mx-auto justify-center items-start">
               
-        {/* Заголовок як перший елемент сітки, що займає всі колонки */}
-        <header className="col-span-full p-4 order-first">
-          <h1 className="text-[24px] font-bold text-left flex items-center gap-4">
+      <header className="col-span-full p-4 order-first">
+        <h1 className="text-[24px] font-bold text-left flex items-center gap-4">
+          
+          {/* --- ЗМІНА ТУТ: Додано обгортку з flex-shrink-0 --- */}
+          <div className="flex-shrink-0">
             <BicycleIconInFrame />
-            <span>Конструктор велосипедного маршрутного орієнтування</span>
-          </h1>
-        </header>
+          </div>
+
+          <span>
+            Конструктор велосипедного маршрутного орієнтування
+          </span>
+        </h1>
+      </header>
 
         {/* Сайдбар (на моб. перший) */}
         <div className="p-4 order-1 lg:order-none">

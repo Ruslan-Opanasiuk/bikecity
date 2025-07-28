@@ -51,30 +51,32 @@ function B4B7ItemsPanel({
 
   const selectedItem = items[selectedIndex];
   const mainSelectStyles = "w-full lg:w-[250px] text-[13px] text-gray-900 font-normal placeholder:text-gray-500 [&[data-placeholder]]:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 data-[state=open]:ring-2 data-[state=open]:ring-blue-500";
-
+  const showObjectSelector = !(isB7 === false && items.length === 1);
   return (
     <div className="space-y-2 mt-10">
       <h4 className="text-left font-semibold text-gray-800 pt-2">
         Налаштування обʼєкту {selectedIndex + 1}:
       </h4>
 
-      <FormRow label="Обрати обʼєкт:">
-        <Select
-          value={String(selectedIndex)}
-          onValueChange={(v) => setSelectedIndex(Number(v))}
-        >
-          <SelectTrigger className={mainSelectStyles}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {selectOptions.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value} className="text-[13px]">
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FormRow>
+      {showObjectSelector && (
+        <FormRow label="Обрати обʼєкт:">
+          <Select
+            value={String(selectedIndex)}
+            onValueChange={(v) => setSelectedIndex(Number(v))}
+          >
+            <SelectTrigger className={mainSelectStyles}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {selectOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value} className="text-[13px]">
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormRow>
+      )}
       
       {selectedItem && (
         <>
