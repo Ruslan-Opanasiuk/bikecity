@@ -80,11 +80,17 @@ function B7Item({
     return textToPath(roadUAMedium, secondaryLine, fontSize2, textX, baselineY, "left", "visualX");
   }, [secondaryLine, fontSize2, textX, mainTextLines.length]);
 
-  const kmTextPath = useMemo(() => {
-    return textToPath(roadUABold, params.distance, 23, 41.5, 50, "center", "visualX");
-  }, [params.distance]);
-
   const iconBaseY = (isTemporaryRoute && mainTextLines.length > 1) ? 75 : (isTemporaryRoute && params.icon === 'water' ? 67 : 50);
+
+    const kmTextPath = useMemo(() => {
+    return textToPath(roadUABold, 
+      params.distance, 
+      23, 
+      41.5, 
+      isTemporaryRoute ? iconBaseY : 50, 
+      "center", 
+      "visualX");
+  }, [params.distance, isTemporaryRoute, iconBaseY]);
   
   // Визначаємо конфігурацію для круглої іконки
     const circleProps = useMemo(() => {
@@ -189,6 +195,7 @@ function B7Item({
             strokeWidth="6" 
             strokeLinecap="round"
           >
+            
             {/* --- ДОДАНО НОВУ ЛІНІЮ --- */}
            <path
               d='M 95.5 0 V 150'
@@ -266,9 +273,6 @@ function B7Item({
         x={routeBadgeX}
         y={mainTextLines.length === 1 ? 12 : 37}
       />
-
-
-
 
 
     </g>
