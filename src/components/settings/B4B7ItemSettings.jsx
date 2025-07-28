@@ -321,7 +321,7 @@ function B4B7ItemSettings({
       )}
       
       {/* УМОВНИЙ БЛОК ДЛЯ ВИБОРУ ПОПЕРЕДЖУВАЛЬНОГО ЗНАКУ */}
-      {params.isTemporaryRoute && (
+      {params.isTemporaryRoute && isB7 && (
         <FormRow label="Застережний знак:">
           <Select
             value={params.warningSignType || ''} // Головна зміна тут

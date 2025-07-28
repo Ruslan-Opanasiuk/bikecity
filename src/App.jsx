@@ -38,6 +38,7 @@ function App() {
   const [signType, setSignType] = useState("B1");
   const [params, setParams] = useState(defaultB1B3Params);
   const [signSize, setSignSize] = useState(null);
+  const [fontSizes, setFontSizes] = useState([]);
 
   const isB1toB3 = ["B1", "B2", "B3"].includes(signType);
   const isB4orB7 = ["B4", "B7"].includes(signType);
@@ -84,7 +85,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50 px-4">
       {/* --- ЗМІНА: Повертаємо все в єдиний Grid-макет --- */}
-      <main className="grid grid-cols-1 lg:grid-cols-[170px_min-content_450px_200px] gap-4 max-w-screen-2xl mx-auto justify-center items-start">
+      <main className="grid grid-cols-1 lg:grid-cols-[170px_434px_450px_200px] gap-4 max-w-screen-2xl mx-auto justify-center items-start">
               
       <header className="col-span-full p-4 order-first">
         <h1 className="text-[24px] font-bold text-left flex items-center gap-4">
@@ -108,9 +109,13 @@ function App() {
           />
         </div>
 
-        {/* Прев'ю (на моб. третій) */}
-        <div className="p-4 order-3 lg:order-none">
-          <SignPreview signType={signType} params={safeParams} setSignSize={setSignSize} />
+        <div className="w-full lg:w-[434px] p-4 order-3 lg:order-none flex justify-start lg:justify-center items-start">
+          <SignPreview
+            signType={signType}
+            params={safeParams}
+            setSignSize={setSignSize}
+            onFontRender={setFontSizes}
+          />
         </div>
 
         {/* Налаштування (на моб. другий) */}

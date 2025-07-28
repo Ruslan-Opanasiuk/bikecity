@@ -4,6 +4,17 @@ import { saveAs } from "file-saver";
 import jsPDF from 'jspdf';
 import SignPreview from "../components/SignPreview";
 
+// --- НОВА ДОПОМІЖНА ФУНКЦІЯ ---
+// Визначає тип знаку (B4, B5, або B6) на основі кількості елементів
+const getEffectiveSignType = (signType, params) => {
+  if (signType === 'B4' && params.b4Items) {
+    const itemCount = params.b4Items.length;
+    if (itemCount === 2) return 'B5';
+    if (itemCount === 3) return 'B6';
+  }
+  return signType;
+};
+
 // Генерація прихованого контейнера з SVG
 export const renderForExport = async (signType, params) => {
   const container = document.createElement("div");
@@ -30,8 +41,6 @@ export const exportSVG = async (signType, params) => {
 
   const fullWidth = parseFloat(svgNode.getAttribute("width"));
   const fullHeight = parseFloat(svgNode.getAttribute("height"));
-
-  // --- ЗМІНА ТУТ: Вираховуємо розмір знаку без рамки ---
   const signWidth = Math.round(fullWidth - 2);
   const signHeight = Math.round(fullHeight - 2);
 
@@ -39,26 +48,18 @@ export const exportSVG = async (signType, params) => {
   let source = serializer.serializeToString(svgNode);
 
   if (!/xmlns=/.test(source)) {
-    source = source.replace(
-      "<svg",
-      '<svg xmlns="http://www.w3.org/2000/svg"'
-    );
+    source = source.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
   }
-
-  source = source.replace(
-    /<svg([^>]*)>/,
-    `<svg$1 viewBox="0 0 ${fullWidth} ${fullHeight}">`
-  );
-
+  source = source.replace(/<svg([^>]*)>/, `<svg$1 viewBox="0 0 ${fullWidth} ${fullHeight}">`);
   source = source
     .replace(/width="([\d.]+)"/, `width="${fullWidth}mm"`)
     .replace(/height="([\d.]+)"/, `height="${fullHeight}mm"`);
 
-  const blob = new Blob([source], {
-    type: "image/svg+xml;charset=utf-8",
-  });
+  const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
   
-  const filename = `${signType}(${signWidth}x${signHeight}).svg`;
+  // --- ЗМІНА ТУТ ---
+  const effectiveSignType = getEffectiveSignType(signType, params);
+  const filename = `${effectiveSignType}(${signWidth}x${signHeight}).svg`;
   saveAs(blob, filename);
 
   root.unmount();
@@ -73,8 +74,6 @@ export const exportPNG = async (signType, params) => {
 
   const fullWidth = parseFloat(svgNode.getAttribute("width"));
   const fullHeight = parseFloat(svgNode.getAttribute("height"));
-
-  // --- ЗМІНА ТУТ: Вираховуємо розмір знаку без рамки ---
   const signWidth = Math.round(fullWidth - 2);
   const signHeight = Math.round(fullHeight - 2);
 
@@ -82,15 +81,10 @@ export const exportPNG = async (signType, params) => {
   let source = serializer.serializeToString(svgNode);
 
   if (!/xmlns=/.test(source)) {
-    source = source.replace(
-      "<svg",
-      '<svg xmlns="http://www.w3.org/2000/svg"'
-    );
+    source = source.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
   }
 
-  const blob = new Blob([source], {
-    type: "image/svg+xml;charset=utf-8",
-  });
+  const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const img = new Image();
 
@@ -99,21 +93,19 @@ export const exportPNG = async (signType, params) => {
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(fullWidth * scale);
     canvas.height = Math.round(fullHeight * scale);
-
     const ctx = canvas.getContext("2d");
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
     URL.revokeObjectURL(url);
     canvas.toBlob((pngBlob) => {
-      const filename = `${signType}(${signWidth}x${signHeight}).png`;
+      // --- ЗМІНА ТУТ ---
+      const effectiveSignType = getEffectiveSignType(signType, params);
+      const filename = `${effectiveSignType}(${signWidth}x${signHeight}).png`;
       saveAs(pngBlob, filename);
     });
   };
 
-  img.onerror = (e) => {
-    console.error("Error loading SVG for PNG export", e);
-  };
-
+  img.onerror = (e) => { console.error("Error loading SVG for PNG export", e); };
   img.src = url;
 
   root.unmount();
@@ -128,8 +120,6 @@ export const exportPDF = async (signType, params) => {
 
   const fullWidth = parseFloat(svgNode.getAttribute("width"));
   const fullHeight = parseFloat(svgNode.getAttribute("height"));
-
-  // --- ЗМІНА ТУТ: Вираховуємо розмір знаку без рамки для назви та розміру PDF ---
   const signWidth = Math.round(fullWidth - 2);
   const signHeight = Math.round(fullHeight - 2);
 
@@ -155,12 +145,14 @@ export const exportPDF = async (signType, params) => {
     const pdf = new jsPDF({
       orientation: signWidth > signHeight ? 'landscape' : 'portrait',
       unit: 'mm',
-      format: [signWidth, signHeight] // Створюємо PDF розміром самого знаку
+      format: [signWidth, signHeight]
     });
 
     pdf.addImage(imgData, 'PNG', 0, 0, signWidth, signHeight);
     
-    const filename = `${signType}(${signWidth}x${signHeight}).pdf`;
+    // --- ЗМІНА ТУТ ---
+    const effectiveSignType = getEffectiveSignType(signType, params);
+    const filename = `${effectiveSignType}(${signWidth}x${signHeight}).pdf`;
     pdf.save(filename);
   };
   
@@ -168,7 +160,6 @@ export const exportPDF = async (signType, params) => {
     console.error("Error loading SVG for PDF export", e);
     URL.revokeObjectURL(url);
   };
-
   img.src = url;
 
   root.unmount();
