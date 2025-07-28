@@ -35,7 +35,7 @@ function SignTypeSidebar({ signType, setSignType }) {
   );
   
   const renderSubheading = (title) => (
-    <h3 className="pl-2 text-[11px] uppercase text-gray-500 font-medium mt-2 mb-0">
+    <h3 className="pl-2 text-[14px] text-gray-500 font-medium mt-2 mb-0">
       {title}
     </h3>
   );
