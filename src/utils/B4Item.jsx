@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import opentype from "opentype.js";
 
 import PathConfigs from "../config/PathConfigs";
-import { computeB4TextLayout } from "./TextLayout";
+import { computeTextLayout } from "./TextLayout";
 import RouteBadgeGroup, {
   getRouteBadgeGroupWidth,
 } from "../components/svg/RouteBadgeGroup";
@@ -150,7 +150,7 @@ function B4Item({
     waveCount,
     waveWidth,
     routeBadgeX,
-  } = computeB4TextLayout({
+  } = computeTextLayout({
     ...params,
     forcedFontSize1: params.forcedFontSize1 || null,
     alignedTextX: params.alignedTextX || null,
@@ -324,7 +324,7 @@ export default B4Item;
 //     ▸ Розрахунок ширини тексту з урахуванням іконок і стрілок
 //
 // [3] Розрахунок текстового леяуту
-//     ▸ computeB4TextLayout обчислює текст, шрифти, хвильки, бейджі
+//     ▸ computeTextLayout обчислює текст, шрифти, хвильки, бейджі
 //
 // [4] Основний текст
 //     ▸ Трансформує кожен рядок у SVG path
