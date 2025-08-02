@@ -10,14 +10,14 @@ import {
   SelectItem,
   SelectValue,
 } from "../ui/select";
-import MultiColorPathConfigs from "../../config/MultiColorPathConfigs"; // Імпорт конфігурацій
+import MultiColorPathConfigs from "../../config/MultiColorPathConfigs";
+import { computeTextLayout } from "../../utils/TextLayout";
+import { getRouteBadgeGroupWidth } from "../svg/RouteBadgeGroup";
 
+// ==============================================================================
+//  ГОЛОВНИЙ КОМПОНЕНТ ДЛЯ ПАНЕЛІ НАЛАШТУВАНЬ
+// ==============================================================================
 
-/**
- * Головний контейнер для налаштувань об'єктів на знаках B4 та B7.
- * Містить випадаючий список для вибору об'єкта та рендерить
- * форму налаштувань B4B7ItemSettings для обраного об'єкта.
- */
 function B4B7ItemsPanel({
   items,
   setItemParams,
@@ -27,14 +27,12 @@ function B4B7ItemsPanel({
 }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Скидаємо індекс на 0, якщо кількість об'єктів змінилася
   useEffect(() => {
     if (selectedIndex >= items.length) {
       setSelectedIndex(0);
     }
   }, [items, selectedIndex]);
 
-  // Генеруємо назви для випадаючого списку
   const selectOptions = items.map((item, i) => {
     let short = "";
     if (item?.icon && item?.mainText && locationTerms[item.icon]?.[item.mainText]) {
@@ -52,6 +50,7 @@ function B4B7ItemsPanel({
   const selectedItem = items[selectedIndex];
   const mainSelectStyles = "w-full lg:w-[250px] text-[13px] text-gray-900 font-normal placeholder:text-gray-500 [&[data-placeholder]]:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 data-[state=open]:ring-2 data-[state=open]:ring-blue-500";
   const showObjectSelector = !(isB7 === false && items.length === 1);
+
   return (
     <div className="space-y-2 mt-10">
       <h4 className="text-left font-semibold text-gray-800 pt-2">
@@ -77,10 +76,10 @@ function B4B7ItemsPanel({
           </Select>
         </FormRow>
       )}
-      
+        
       {selectedItem && (
         <>
-          <hr className="my-2 border-gray-200" /> 
+          <hr className="my-2 border-gray-200" />
           <B4B7ItemSettings
             key={selectedIndex}
             index={selectedIndex}
@@ -100,7 +99,10 @@ function B4B7ItemsPanel({
 //  КОМПОНЕНТ ФОРМИ НАЛАШТУВАНЬ ДЛЯ ОДНОГО ОБ'ЄКТА
 // ==============================================================================
 
-// Допоміжний компонент для рендерингу багатоколірних іконок
+const ribbonOrCircleIcons = new Set([
+  "cityCentre", "bridge", "interchange", "bicycleRoute", "district", "other", "water", "streetNetwork"
+]);
+
 const MultiColorSignPreview = ({ config, size = 24 }) => (
   <svg width={size} height={size} viewBox={config.viewBox}>
     {config.paths.map((path, index) => (
@@ -110,10 +112,6 @@ const MultiColorSignPreview = ({ config, size = 24 }) => (
 );
 
 
-/**
- * Форма з деталізованими налаштуваннями для одного об'єкта (одного рядка)
- * на знаках B4 або B7.
- */
 function B4B7ItemSettings({
   index,
   params,
@@ -122,26 +120,76 @@ function B4B7ItemSettings({
   tableType,
   isB7,
 }) {
+  
+  const [temporaryOverflowMessage, setTemporaryOverflowMessage] = useState(null);
+  const [iconOverflowMessage, setIconOverflowMessage] = useState(null);
+  const [textOverflowMessage, setTextOverflowMessage] = useState(null);
 
-  // --- Обробники подій ---
+  const clearAllOverflowMessages = () => {
+    setTemporaryOverflowMessage(null);
+    setIconOverflowMessage(null);
+    setTextOverflowMessage(null);
+  };
 
-  const handleDirectionChange = (value) => setParams({ ...params, direction: value });
+  const checkOverflowForSpeculativeParams = (speculativeParams) => {
+    const iconKey = speculativeParams.icon === "streetNetwork" && speculativeParams.isUrbanCenter ? "cityCentre" : speculativeParams.icon;
+    const iconConfig = iconKey ? PathConfigs[iconKey] : null;
+    const isRibbonOrCircle = !ribbonOrCircleIcons.has(iconKey);
+    const temporaryOffset = speculativeParams.isTemporaryRoute ? 63 : 0;
+    
+    const textX = (isRibbonOrCircle ? 136 + ((iconConfig?.width || 0) * (iconConfig?.scale2 || 1)) + 20 : 136) + temporaryOffset;
+    const badgeGroupWidth = getRouteBadgeGroupWidth(speculativeParams);
+    const availableTextWidthMain = 600 - 28 - textX - badgeGroupWidth;
+    const availableTextWidthSecondary = 600 - 28 - textX;
+    
+    const layout = computeTextLayout({
+      ...speculativeParams,
+      textX,
+      availableTextWidthMain,
+      availableTextWidthSecondary,
+    });
+
+    return layout.isOverflowing;
+  };
+
+  const handleDirectionChange = (value) => { clearAllOverflowMessages(); setParams({ ...params, direction: value }); };
   const handleRouteNumberChange = (e) => {
+    clearAllOverflowMessages();
     let value = e.target.value.replace(/\D/g, "");
     if (value.startsWith("0")) value = value.slice(1);
     value = value.slice(0, 2);
     setParams({ ...params, routeNumber: value });
   };
-  const handleUrbanCenterToggle = (e) => setParams({ ...params, isUrbanCenter: e.target.checked });
-  const handleCustomUaChange = (e) => setParams({ ...params, customUa: e.target.value });
-  const handleCustomEnChange = (e) => setParams({ ...params, customEn: e.target.value });
-  const handleTemporaryRouteToggle = (e) => setParams({ ...params, isTemporaryRoute: e.target.checked });
+  const handleUrbanCenterToggle = (e) => { clearAllOverflowMessages(); setParams({ ...params, isUrbanCenter: e.target.checked }); };
+  const handleCustomUaChange = (e) => { clearAllOverflowMessages(); setParams({ ...params, customUa: e.target.value }); };
+  const handleCustomEnChange = (e) => { clearAllOverflowMessages(); setParams({ ...params, customEn: e.target.value }); };
+  
+  const handleTemporaryRouteToggle = (e) => {
+    clearAllOverflowMessages();
+    const isChecked = e.target.checked;
+    
+    if (isChecked) {
+      // ЛОГІКА ДЛЯ B7: блокуємо, якщо немає місця
+      if (isB7) {
+        const speculativeParams = { ...params, isTemporaryRoute: true };
+        if (checkOverflowForSpeculativeParams(speculativeParams)) {
+          setTemporaryOverflowMessage("Недостатньо місця");
+          return;
+        }
+      }
+      // ДЛЯ B4 ЦЕЙ БЛОК БУДЕ ВИКОНУВАТИСЯ БЕЗ ПЕРЕВІРОК
+      setParams({ ...params, isTemporaryRoute: isChecked });
+    } else {
+      setParams({ ...params, isTemporaryRoute: isChecked, warningSignType: null });
+    }
+  };
 
   const handleIconChange = (value) => {
+    clearAllOverflowMessages();
     const newIcon = value === "none" ? null : value;
     const isCenterOrRoute = newIcon === "cityCentre" || newIcon === "bicycleRoute";
     const isChangingFromBicycleToOther = params.icon === "bicycleRoute" && newIcon !== "bicycleRoute";
-    
+      
     const baseParams = {
       ...params, icon: newIcon, mainText: "", subText: isCenterOrRoute ? "" : params.subText,
       isUrbanCenter: false, customUa: "", customEn: "",
@@ -159,9 +207,39 @@ function B4B7ItemSettings({
   };
 
   const handleMainTextChange = (value) => {
+    clearAllOverflowMessages();
     const clearSubText = value === "Центр міста" || value === "Bеломаршрут";
     const actualValue = value === "Регіональний / локальний" ? "Регіональний" : value;
     setParams({ ...params, mainText: actualValue, subText: clearSubText ? "" : params.subText });
+  };
+
+  const handleSubTextChange = (e) => {
+    clearAllOverflowMessages();
+    const newText = e.target.value;
+    const isAddingText = newText.length > (params.subText || "").length;
+
+    const speculativeParams = { ...params, subText: newText };
+    
+    if (checkOverflowForSpeculativeParams(speculativeParams) && isAddingText) {
+      setTextOverflowMessage("Текст занадто довгий");
+      return;
+    }
+
+    setTextOverflowMessage(null);
+    setParams(speculativeParams);
+  };
+  
+  const handleDistanceChange = (e) => {
+    clearAllOverflowMessages();
+    let val = e.target.value.replace('.', ',');
+    if (/^((\d{1,2}(,\d?)?)|(\d{1,3}))?$/.test(val)) {
+      setParams({ ...params, distance: val });
+    }
+  };
+
+  const handleWarningSignChange = (value) => {
+    clearAllOverflowMessages();
+    setParams({ ...params, warningSignType: value === 'none' ? null : value });
   };
 
   useEffect(() => {
@@ -170,8 +248,6 @@ function B4B7ItemSettings({
     }
   }, [tableType, params.mainText, setParams]);
 
-
-  // --- Константи та обчислювані значення ---
 
   const allDirections = [
     { value: "straight", label: "Прямо", icon: PathConfigs.smallArrow },
@@ -198,7 +274,7 @@ function B4B7ItemSettings({
   const isBicycleRoute = params.icon === "bicycleRoute" || params.mainText === "Bеломаршрут";
   const shouldShowNameField = !isBicycleRoute && params.icon !== "cityCentre" && !["Центр міста", "Bеломаршрут"].includes(params.mainText);
   const inputClasses = "w-full lg:w-[250px] text-[13px] text-gray-900 font-normal placeholder:text-gray-500 [&[data-placeholder]]:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 data-[state=open]:ring-2 data-[state=open]:ring-blue-500";
-  
+    
   const warningSignOptions = [
     { value: 'roadWorks', label: 'Дорожні роботи' },
     { value: 'unevenRoad', label: 'Нерівна дорога' },
@@ -209,11 +285,55 @@ function B4B7ItemSettings({
     { value: 'doNotEnter', label: 'В\'їзд заборонено' },
   ];
   
-  // --- Рендер компонента ---
+  const temporaryToggleJSX = (
+    <FormRow label="">
+      <div className="flex flex-col gap-1">
+        <label htmlFor="isTemporaryRoute" className="inline-flex items-center cursor-pointer gap-3">
+          <div className="relative">
+            <input type="checkbox" id="isTemporaryRoute" className="sr-only peer" checked={params.isTemporaryRoute || false} onChange={handleTemporaryRouteToggle}/>
+            <div className="w-7 h-4 bg-gray-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:bg-blue-600"></div>
+            <div className="absolute left-0.5 top-0.5 bg-white border-gray-300 border rounded-full h-3 w-3 transition-transform peer-checked:translate-x-3"></div>
+          </div>
+          <span className="text-[13px] text-gray-700">Тимчасовий маршрут</span>
+        </label>
+        {temporaryOverflowMessage && (
+          <p className="text-red-500 text-xs mt-1">
+            {temporaryOverflowMessage}
+          </p>
+        )}
+      </div>
+    </FormRow>
+  );
 
   return (
     <div className="space-y-2 w-full">
-      {/* Напрямок руху (тільки для B4) */}
+      {isB7 && tableType !== "temporary" && tableType !== "seasonal" && temporaryToggleJSX}
+      
+      {params.isTemporaryRoute && isB7 && (
+        <FormRow label="Застережний знак:">
+          <Select
+            value={params.warningSignType || ''}
+            onValueChange={handleWarningSignChange}
+          >
+            <SelectTrigger className={inputClasses}>
+              <SelectValue placeholder="Виберіть знак" />
+            </SelectTrigger>
+            <SelectContent>
+              {warningSignOptions.map(option => (
+                <SelectItem key={option.value} value={option.value} className="text-[13px]">
+                  <div className="flex items-center gap-2">
+                    {option.value !== 'none' && MultiColorPathConfigs[option.value] && (
+                      <MultiColorSignPreview config={MultiColorPathConfigs[option.value]} />
+                    )}
+                    <span>{option.label}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormRow>
+      )}
+
       {!isB7 && (
         <FormRow label="Напрямок:">
           <Select value={params.direction} onValueChange={handleDirectionChange}>
@@ -235,7 +355,6 @@ function B4B7ItemSettings({
         </FormRow>
       )}
 
-      {/* Піктограма об'єкта */}
       <FormRow label="Піктограма:">
         <Select value={params.icon ?? ""} onValueChange={handleIconChange}>
           <SelectTrigger className={inputClasses}><SelectValue placeholder="Оберіть піктограму" /></SelectTrigger>
@@ -252,7 +371,6 @@ function B4B7ItemSettings({
         </Select>
       </FormRow>
 
-      {/* Перемикач "Центр населеного пункту" */}
       {params.icon === "streetNetwork" && (
         <FormRow label="">
           <label htmlFor="isUrbanCenter" className="inline-flex items-center cursor-pointer gap-3">
@@ -266,7 +384,6 @@ function B4B7ItemSettings({
         </FormRow>
       )}
 
-      {/* Поля для категорії або власної назви */}
       {params.icon === "other" ? (
         <FormRow label="Категорія:">
           <div className="flex flex-col gap-1">
@@ -287,101 +404,92 @@ function B4B7ItemSettings({
         </FormRow>
       )}
 
-      {/* Поле для номера маршруту або назви об'єкта */}
       {isBicycleRoute && (
         <FormRow label="Номер маршруту:">
           <Input inputMode="numeric" pattern="\d*" value={params.routeNumber || ""} onChange={handleRouteNumberChange} placeholder="Введіть цифру від 1 до 99" className={inputClasses} />
         </FormRow>
       )}
       {!isBicycleRoute && shouldShowNameField && (
-        <FormRow label="Назва:">
-          <Input value={params.subText || ""} onChange={(e) => setParams({ ...params, subText: e.target.value })} placeholder="Ведіть українську назву" className={inputClasses} disabled={isTooLong} />
-        </FormRow>
+        <>
+          <FormRow label="Назва:">
+            <Input
+              value={params.subText || ""}
+              onChange={handleSubTextChange}
+              placeholder="Ведіть українську назву"
+              className={inputClasses}
+            />
+          </FormRow>
+          {textOverflowMessage && (
+            <FormRow>
+              <p className="text-red-500 text-xs mt-1">
+                {textOverflowMessage}
+              </p>
+            </FormRow>
+          )}
+        </>
       )}
       
-      {/* Поле для відстані (тільки для B7) */}
       {isB7 && (
         <FormRow label="Відстань (км):">
-          <Input inputMode="numeric" pattern="(\d{1,2}(,\d)?|\d{3})" value={params.distance ?? ""} onChange={(e) => { let val = e.target.value.replace('.', ','); if (/^((\d{1,2}(,\d?)?)|(\d{1,3}))?$/.test(val)) { setParams({ ...params, distance: val }); } }} placeholder="Введіть значення від 0,1 до 999" className={inputClasses} />
+          <Input inputMode="numeric" pattern="(\d{1,2}(,\d)?|\d{3})" value={params.distance ?? ""} onChange={handleDistanceChange} placeholder="Введіть значення від 0,1 до 999" className={inputClasses} />
         </FormRow>
       )}
 
-      {/* Перемикач "Тимчасовий маршрут" */}
-      {tableType !== "temporary" && !(isB7 && tableType === "seasonal") && (
-        <FormRow label="">
-          <label htmlFor="isTemporaryRoute" className="inline-flex items-center cursor-pointer gap-3">
-            <div className="relative">
-              <input type="checkbox" id="isTemporaryRoute" className="sr-only peer" checked={params.isTemporaryRoute || false} onChange={handleTemporaryRouteToggle}/>
-              <div className="w-7 h-4 bg-gray-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:bg-blue-600"></div>
-              <div className="absolute left-0.5 top-0.5 bg-white border-gray-300 border rounded-full h-3 w-3 transition-transform peer-checked:translate-x-3"></div>
-            </div>
-            <span className="text-[13px] text-gray-700">Тимчасовий маршрут</span>
-          </label>
-        </FormRow>
-      )}
+      {!isB7 && tableType !== "temporary" && tableType !== "seasonal" && temporaryToggleJSX}
       
-      {/* УМОВНИЙ БЛОК ДЛЯ ВИБОРУ ПОПЕРЕДЖУВАЛЬНОГО ЗНАКУ */}
-      {params.isTemporaryRoute && isB7 && (
-        <FormRow label="Застережний знак:">
-          <Select
-            value={params.warningSignType || ''} // Головна зміна тут
-            onValueChange={(value) => setParams({ ...params, warningSignType: value === 'none' ? null : value })}
-          >
-            <SelectTrigger className={inputClasses}>
-              <SelectValue placeholder="Виберіть знак" />
-            </SelectTrigger>
-            <SelectContent>
-              {warningSignOptions.map(option => (
-                <SelectItem key={option.value} value={option.value} className="text-[13px]">
-                  <div className="flex items-center gap-2">
-                    {option.value !== 'none' && MultiColorPathConfigs[option.value] && (
-                      <MultiColorSignPreview config={MultiColorPathConfigs[option.value]} />
-                    )}
-                    <span>{option.label}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FormRow>
-      )}
+      <>
+        <FormRow label="Додаткові позначки:">
+          <div className="flex border rounded-md overflow-hidden w-fit">
+            {[
+              { key: "showEurovelo", iconKey: "eurovelo" },
+              { key: "showVeloParking", iconKey: "veloParking" },
+              { key: "showVeloSTO", iconKey: "veloSTO" },
+            ].map(({ key, iconKey }) => {
+              const icon = PathConfigs[iconKey];
+              const isActive = params[key];
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  className={`w-9 h-9 flex items-center justify-center border-r last:border-r-0 ${isActive ? "bg-blue-600" : "bg-white hover:bg-gray-100"}`}
+                  onClick={() => {
+                    clearAllOverflowMessages();
+                    const activeKeys = ["showEurovelo", "showVeloParking", "showVeloSTO"].filter(k => params[k]);
+                    const isTryingToAdd = !params[key];
+                    const maxAllowed = params.icon === "bicycleRoute" ? 1 : 2;
+                    
+                    if (isTryingToAdd) {
+                      if (activeKeys.length >= maxAllowed) return;
 
-      {/* Блок з додатковими іконками */}
-      <FormRow label="Додаткові позначки:">
-        <div className="flex border rounded-md overflow-hidden w-fit">
-          {[
-            { key: "showEurovelo", iconKey: "eurovelo" },
-            { key: "showVeloParking", iconKey: "veloParking" },
-            { key: "showVeloSTO", iconKey: "veloSTO" },
-          ].map(({ key, iconKey }) => {
-            const icon = PathConfigs[iconKey];
-            const isActive = params[key];
-            return (
-              <button
-                key={key}
-                type="button"
-                className={`w-9 h-9 flex items-center justify-center border-r last:border-r-0 ${isActive ? "bg-blue-600" : "bg-white hover:bg-gray-100"}`}
-                onClick={() => {
-                  const activeKeys = ["showEurovelo", "showVeloParking", "showVeloSTO"].filter(k => params[k]);
-                  const isTryingToAdd = !params[key];
-                  const maxAllowed = params.icon === "bicycleRoute" ? 1 : 2;
-                  if (isTryingToAdd && activeKeys.length >= maxAllowed) return;
-                  setParams({ ...params, [key]: !params[key] });
-                }}
-              >
-                <svg width={20} height={20} viewBox={`0 0 ${icon.width} ${icon.height}`} className={`mx-auto ${isActive ? 'text-white' : 'text-gray-700'}`}>
-                  <path d={icon.d} fill="currentColor" fillRule="evenodd" />
-                </svg>
-              </button>
-            );
-          })}
-        </div>
-      </FormRow>
+                      const speculativeParams = { ...params, [key]: true };
+                      if (checkOverflowForSpeculativeParams(speculativeParams)) {
+                        setIconOverflowMessage("Недостатньо місця");
+                        return;
+                      }
+                    }
+
+                    setParams({ ...params, [key]: !params[key] });
+                  }}
+                >
+                  <svg width={20} height={20} viewBox={`0 0 ${icon.width} ${icon.height}`} className={`mx-auto ${isActive ? 'text-white' : 'text-gray-700'}`}>
+                    <path d={icon.d} fill="currentColor" fillRule="evenodd" />
+                  </svg>
+                </button>
+              );
+            })}
+          </div>
+        </FormRow>
+        {iconOverflowMessage && (
+          <FormRow>
+            <p className="text-red-500 text-xs mt-1">
+              {iconOverflowMessage}
+            </p>
+          </FormRow>
+        )}
+      </>
     </div>
   );
 }
-
-// B4B7ItemSettings.directionLayout - залишається без змін
 
 B4B7ItemSettings.directionLayout = {
   straight: { rotation: 0 }, left: { rotation: -90 }, right: { rotation: 90 },

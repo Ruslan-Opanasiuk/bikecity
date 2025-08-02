@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import SignTypeSidebar from "./components/SignTypeSidebar";
-import SignPreview from "./components/SignPreview"; 
+import SignPreview from "./components/SignPreview";
 import B1B7SettingsPanel from "./components/settings/B1B7SettingsPanel";
 import B4B7ItemsPanel from "./components/settings/B4B7ItemSettings";
 import ExportBlock from "./components/ExportBlock";
@@ -14,6 +14,14 @@ import {
   defaultB7Params,
 } from "./config/defaultParams";
 
+// Імпортуємо допоміжні функції для обчислення макету
+import { computeTextLayout } from "./utils/TextLayout";
+import { getRouteBadgeGroupWidth } from "./components/svg/RouteBadgeGroup";
+
+// Додаємо конфігурацію для іконок, які не є стрічковими
+const ribbonOrCircleIcons = new Set([
+  "cityCentre", "bridge", "interchange", "bicycleRoute", "district", "other", "water", "streetNetwork"
+]);
 
 const BicycleIconInFrame = () => {
   const icon = PathConfigs.bicycle;
@@ -23,7 +31,7 @@ const BicycleIconInFrame = () => {
   const finalHeight = icon.height * scale;
   const translateX = (boxSize - desiredWidth) / 2;
   const translateY = (boxSize - finalHeight) / 2;
-  
+
   return (
     <svg width={boxSize} height={boxSize} viewBox={`0 0 ${boxSize} ${boxSize}`} xmlns="http://www.w3.org/2000/svg">
       <rect width={boxSize} height={boxSize} rx="7" fill="#005187" />
@@ -39,6 +47,9 @@ function App() {
   const [params, setParams] = useState(defaultB1B3Params);
   const [signSize, setSignSize] = useState(null);
   const [fontSizes, setFontSizes] = useState([]);
+
+  // --- НОВИЙ СТАН ДЛЯ ВІДСТЕЖЕННЯ ПЕРЕПОВНЕННЯ ---
+  const [isTooLongArr, setIsTooLongArr] = useState([]);
 
   const isB1toB3 = ["B1", "B2", "B3"].includes(signType);
   const isB4orB7 = ["B4", "B7"].includes(signType);
@@ -82,26 +93,56 @@ function App() {
     }
   }, [params.tableType]);
 
+  // --- НОВИЙ ЕФЕКТ ДЛЯ ОБЧИСЛЕННЯ ПЕРЕПОВНЕННЯ ---
+  useEffect(() => {
+    if (isB4orB7 && safeParams.b4Items) {
+      const newIsTooLongArr = safeParams.b4Items.map(itemParams => {
+        // Логіка для розрахунку availableTextWidthMain
+        // (скопійована з компонента B7, оскільки вона універсальна)
+        const iconKey = itemParams.icon === "streetNetwork" && itemParams.isUrbanCenter ? "cityCentre" : itemParams.icon;
+        const iconConfig = iconKey ? PathConfigs[iconKey] : null;
+        const isRibbonOrCircle = !ribbonOrCircleIcons.has(iconKey);
+        const temporaryOffset = itemParams.isTemporaryRoute ? 63 : 0;
+        
+        const textX = (isRibbonOrCircle ? 136 + ((iconConfig?.width || 0) * (iconConfig?.scale2 || 1)) + 20 : 136) + temporaryOffset;
+        const badgeGroupWidth = getRouteBadgeGroupWidth({ ...safeParams, ...itemParams });
+        const availableTextWidthMain = 600 - 28 - textX - badgeGroupWidth;
+        const availableTextWidthSecondary = 600 - 28 - textX;
+        
+        // Викликаємо computeTextLayout для перевірки з усіма параметрами
+        const layout = computeTextLayout({
+          ...safeParams,
+          ...itemParams,
+          textX,
+          availableTextWidthMain,
+          availableTextWidthSecondary,
+        });
+        
+        const shouldBeBlocked = layout.isOverflowing && 
+                                (layout.mainTextLines.length > 1 || itemParams.icon === "water");
+
+        return shouldBeBlocked;
+      });
+      setIsTooLongArr(newIsTooLongArr);
+    } else {
+      setIsTooLongArr([]);
+    }
+}, [isB4orB7, safeParams]);;
+
   return (
     <div className="min-h-screen bg-gray-50 px-4">
-      {/* --- ЗМІНА: Повертаємо все в єдиний Grid-макет --- */}
       <main className="grid grid-cols-1 lg:grid-cols-[170px_434px_450px_200px] gap-4 max-w-screen-2xl mx-auto justify-center items-start">
-              
-      <header className="col-span-full p-4 order-first">
-        <h1 className="text-[24px] font-bold text-left flex items-center gap-4">
-          
-          {/* --- ЗМІНА ТУТ: Додано обгортку з flex-shrink-0 --- */}
-          <div className="flex-shrink-0">
-            <BicycleIconInFrame />
-          </div>
+        <header className="col-span-full p-4 order-first">
+          <h1 className="text-[24px] font-bold text-left flex items-center gap-4">
+            <div className="flex-shrink-0">
+              <BicycleIconInFrame />
+            </div>
+            <span>
+              Конструктор велосипедного маршрутного орієнтування
+            </span>
+          </h1>
+        </header>
 
-          <span>
-            Конструктор велосипедного маршрутного орієнтування
-          </span>
-        </h1>
-      </header>
-
-        {/* Сайдбар (на моб. перший) */}
         <div className="p-4 order-1 lg:order-none">
           <SignTypeSidebar
             signType={signType}
@@ -118,7 +159,6 @@ function App() {
           />
         </div>
 
-        {/* Налаштування (на моб. другий) */}
         <div className="p-4 flex flex-col gap-4 order-2 lg:order-none">
           {usesB1B6Panel && (
             <B1B7SettingsPanel
@@ -136,11 +176,12 @@ function App() {
               setItemParams={(i, newItem) => updateB4Item(i, newItem)}
               tableType={safeParams.tableType}
               isB7={signType === "B7"}
+              // --- ПЕРЕДАЄМО НОВИЙ МАСИВ ЗІ СТАНОМ ПЕРЕПОВНЕННЯ ---
+              isTooLongArr={isTooLongArr}
             />
           )}
         </div>
 
-        {/* Експорт (на моб. четвертий) */}
         <div className="p-4 order-4 lg:order-none">
           <ExportBlock
             signType={signType}

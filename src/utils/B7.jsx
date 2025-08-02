@@ -73,7 +73,7 @@ function B7({ params }) {
     const availableTextWidthMain = 600 - 28 - textX - badgeGroupWidth;
     
     // Розрахунок доступної ширини для вторинного (англійського) тексту.
-    const availableTextWidthSecondary = 600 - 28 - textX;
+    const availableTextWidthSecondary = 600 - 28 - textX - 8;
 
     // Повертаємо об'єкт з усіма розрахованими параметрами для поточного елемента
     return { ...params, ...item, textX, iconRenderX, availableTextWidthMain, availableTextWidthSecondary };

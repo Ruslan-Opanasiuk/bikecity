@@ -127,11 +127,11 @@ function B7Item({
 
 
   const TempRoutePaths = {
-    diagonalUp: 'M 95.5 0 Q 158.5 0, 158.5 75',   // Дуга знизу вгору
+    diagonalUp: 'M 95.5 0 Q 158.5 0, 158.5 75',       // Дуга знизу вгору
     diagonalDown: 'M 95.5 150 Q 158.5 150, 158.5 75', // Дуга зверху вниз
-    lineFull: 'M 158.5 0 V 150',                     // Повна вертикальна лінія
-    lineHalfDown: 'M 158.5 0 V 75',                 // Лінія зверху до центру
-    lineHalfUp: 'M 158.5 75 V 150',                  // Лінія з центру донизу
+    lineFull: 'M 158.5 0 V 150',                      // Повна вертикальна лінія
+    lineHalfDown: 'M 158.5 0 V 75',                   // Лінія зверху до центру
+    lineHalfUp: 'M 158.5 75 V 150',                   // Лінія з центру донизу
   };
 
   // --- Рендер компонента ---
@@ -144,7 +144,7 @@ function B7Item({
           {/* Перший елемент: лінія від центру до низу */}
           {isFirst && (
             <path
-              d={`M 95.5 ${itemHeight / 2-9} V ${itemHeight+9}`}
+              d={`M 95.5 ${50-9} V ${itemHeight+9}`}
               stroke={accentColor}
               strokeWidth="6"
             />
@@ -168,7 +168,7 @@ function B7Item({
         </>
       )}
 
-
+      {/* <rect x={572} y={0} width={28} height={150} fill={"red"} /> */}
       {/* <rect x={0} y={iconBaseY-0.5} width={600} height={1} fill={"black"} />
       <rect x={158} y={0} width={1} height={150} fill={"black"} />
       <rect x={95} y={0} width={1} height={150} fill={"black"} /> */}

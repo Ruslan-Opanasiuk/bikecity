@@ -137,7 +137,7 @@ function B4Item({
     520 - (originalTextX - xPadding) - textXShift - arrowRightSpace - badgeGroupWidth;
 
   const availableTextWidthSecondary =
-    520 - (originalTextX - xPadding) - textXShift - arrowRightSpace;
+    520 - (originalTextX - xPadding) - textXShift - arrowRightSpace - 4;
 
   // === [3] РОЗРАХУНОК ТЕКСТОВОГО ЛЕЯУТУ ===
 
@@ -208,6 +208,8 @@ function B4Item({
 
   return (
     <g transform={transform || `translate(${x}, ${y})`}>
+
+      {/* <rect x={560} y={0} width={40} height={200} fill={"red"} /> */}
       {/* [6.1] Тимчасовий жовтий фон */}
       {shouldShowTemporaryBg &&
         (isLast ? (
