@@ -13,7 +13,7 @@ const FormRow = ({ label, children, align = "center" }) => {
 
   return (
     // мобільно: колонки; на lg: грід з 2 колонками
-    <div className={`flex flex-col gap-1 lg:grid lg:grid-cols-[150px_1fr] ${alignmentClass} lg:gap-x-4`}>
+    <div className={`flex flex-col gap-1 lg:grid lg:grid-cols-[200px_1fr] ${alignmentClass} lg:gap-x-4`}>
       <label className="font-semibold text-[13px] text-gray-800 whitespace-nowrap text-left lg:text-right">
         {label}
       </label>

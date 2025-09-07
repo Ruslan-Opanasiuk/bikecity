@@ -203,6 +203,8 @@ import transliterate from "./transliterate";
     const isOverflowing = fontSize1 <= minFontSize1;
 
     // === ПОВЕРНЕННЯ РЕЗУЛЬТАТІВ ===
+    console.debug('[layout.secondaryLine]', secondaryLineToRender);
+
     return {
       mainTextLines,
       secondaryLine: secondaryLineToRender,

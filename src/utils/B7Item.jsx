@@ -92,27 +92,51 @@ function B7Item({
       "visualX");
   }, [params.distance, isTemporaryRoute, iconBaseY]);
   
-  // Визначаємо конфігурацію для круглої іконки
-    const circleProps = useMemo(() => {
-      let config = CircleConfigs["B7"];
-      if (iconKey === "bicycleRoute") config = CircleConfigs["B7bicycle"];
-      else if (iconKey === "cityCentre") config = CircleConfigs["B7citycentre"];
-      else if (iconKey === "interchange") config = CircleConfigs["B7interchange"];
-      
-      // --- ЗМІНА ТУТ ---
-      const isSpecialTempCase = params.isTemporaryRoute && (iconKey === 'cityCentre' || iconKey === 'interchange');
-      const finalInnerColor = isSpecialTempCase 
-        ? TEMP_COLOR 
-        : (shouldHaveColoredDot ? accentColor : WHITE_COLOR);
+// після iconKey / iconConfig / shouldHaveColoredDot:
+const hasExtraBikeRoute = Boolean(params.showExtraRoute1 || params.showExtraRoute2);
 
-      return {
-        config,
-        outerColor: BLACK_COLOR,
-        innerColor: finalInnerColor, // Використовуємо нову змінну
-        cx: 95.5 + temporaryOffset,
-        cy: iconBaseY,
-      };
-    }, [iconKey, shouldHaveColoredDot, accentColor, temporaryOffset, params.isTemporaryRoute, mainTextLines.length, params.icon]);
+// 🔸 кільце показуємо: 1) завжди для bicycleRoute; 2) для VR1/VR2 лише якщо немає внутрішньої іконки
+const wantsBicycleRing =
+  iconKey === "bicycleRoute" || (hasExtraBikeRoute && !iconConfig);
+
+const circleProps = useMemo(() => {
+  let config = CircleConfigs["B7"];
+  if (wantsBicycleRing) {
+    config = CircleConfigs["B7bicycle"];      // «дірчасте» кільце
+  } else if (iconKey === "cityCentre") {
+    config = CircleConfigs["B7citycentre"];
+  } else if (iconKey === "interchange") {
+    config = CircleConfigs["B7interchange"];
+  }
+
+  const isSpecialTempCase =
+    params.isTemporaryRoute && (iconKey === "cityCentre" || iconKey === "interchange");
+
+  const finalInnerColor = isSpecialTempCase
+    ? TEMP_COLOR
+    : (wantsBicycleRing
+        ? WHITE_COLOR     // для кільця – вибивка всередині
+        : (shouldHaveColoredDot ? accentColor : WHITE_COLOR));
+
+  return {
+    config,
+    outerColor: BLACK_COLOR,
+    innerColor: finalInnerColor,
+    cx: 95.5 + temporaryOffset,
+    cy: iconBaseY,
+  };
+}, [
+  iconKey,
+  iconConfig,            // 🔹 додали залежність
+  shouldHaveColoredDot,
+  accentColor,
+  temporaryOffset,
+  params.isTemporaryRoute,
+  mainTextLines.length,
+  params.icon,
+  wantsBicycleRing,      // 🔹 додали залежність
+]);
+
 
 
     const MultiColorSignPreview = ({ config, size = 45 }) => (

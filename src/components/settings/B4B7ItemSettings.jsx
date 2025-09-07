@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import locationTerms from "../../config/locationTerms";
 import PathConfigs from "../../config/PathConfigs";
 import { Input } from "@/components/ui/input";
@@ -131,6 +131,8 @@ function B4B7ItemSettings({
     setTextOverflowMessage(null);
   };
 
+  
+
   const checkOverflowForSpeculativeParams = (speculativeParams) => {
     const iconKey = speculativeParams.icon === "streetNetwork" && speculativeParams.isUrbanCenter ? "cityCentre" : speculativeParams.icon;
     const iconConfig = iconKey ? PathConfigs[iconKey] : null;
@@ -151,6 +153,25 @@ function B4B7ItemSettings({
 
     return layout.isOverflowing;
   };
+
+  const canOpenExtraRoute = (p, which /* 1 | 2 */) => {
+  const showKey = which === 1 ? "showExtraRoute1" : "showExtraRoute2";
+  const typeKey = which === 1 ? "extraRoute1Type" : "extraRoute2Type";
+  const numKey  = which === 1 ? "extraRoute1Number" : "extraRoute2Number";
+
+  // тестуємо три типи з "найтовстішим" двозначним номером
+  const candidates = ["Локальний", "Регіональний", "Національний"].map(t => ({
+    [showKey]: true,
+    [typeKey]: t,
+    [numKey]: "88",
+  }));
+
+  return candidates.some(extra => {
+    const spec = { ...p, ...extra };
+    return !checkOverflowForSpeculativeParams(spec);
+  });
+};
+
 
   const handleDirectionChange = (value) => { clearAllOverflowMessages(); setParams({ ...params, direction: value }); };
   const handleRouteNumberChange = (e) => {
@@ -209,7 +230,7 @@ function B4B7ItemSettings({
   const handleMainTextChange = (value) => {
     clearAllOverflowMessages();
     const clearSubText = value === "Центр міста" || value === "Bеломаршрут";
-    const actualValue = value === "Регіональний / локальний" ? "Регіональний" : value;
+    const actualValue = value === "Регіональний / Локальний" ? "Регіональний" : value;
     setParams({ ...params, mainText: actualValue, subText: clearSubText ? "" : params.subText });
   };
 
@@ -242,18 +263,17 @@ function B4B7ItemSettings({
     setParams({ ...params, warningSignType: value === 'none' ? null : value });
   };
 
-// === ДОДАЙ поруч з іншими handle* ===
 const handleExtraRoute1TypeChange = (value) => {
   clearAllOverflowMessages();
-  // перевіряємо переповнення лише якщо вже є номер
+  const v = normalizeRouteLevel(value);
   if (params.extraRoute1Number) {
-    const spec = { ...params, showExtraRoute1: true, extraRoute1Type: value };
+    const spec = { ...params, showExtraRoute1: true, extraRoute1Type: v };
     if (checkOverflowForSpeculativeParams(spec)) {
       setIconOverflowMessage("Недостатньо місця");
       return;
     }
   }
-  setParams({ ...params, extraRoute1Type: value });
+  setParams({ ...params, extraRoute1Type: v });
 };
 
 const handleExtraRoute1NumberChange = (e) => {
@@ -274,14 +294,15 @@ const handleExtraRoute1NumberChange = (e) => {
 
 const handleExtraRoute2TypeChange = (value) => {
   clearAllOverflowMessages();
+  const v = normalizeRouteLevel(value);
   if (params.extraRoute2Number) {
-    const spec = { ...params, showExtraRoute2: true, extraRoute2Type: value };
+    const spec = { ...params, showExtraRoute2: true, extraRoute2Type: v };
     if (checkOverflowForSpeculativeParams(spec)) {
       setIconOverflowMessage("Недостатньо місця");
       return;
     }
   }
-  setParams({ ...params, extraRoute2Type: value });
+  setParams({ ...params, extraRoute2Type: v });
 };
 
 const handleExtraRoute2NumberChange = (e) => {
@@ -330,11 +351,51 @@ const getRightFreeSpacePx = (p) => {
 };
 
 
-  useEffect(() => {
-    if (tableType === "seasonal" && params.mainText === "Національний") {
-      setParams({ ...params, mainText: "Регіональний" });
+useEffect(() => {
+  if (tableType !== "seasonal") return;
+
+  const patch = {};
+  if (params.mainText === "Національний") patch.mainText = "Регіональний";
+  if (params.extraRoute1Type === "Національний") patch.extraRoute1Type = "Регіональний";
+  if (params.extraRoute2Type === "Національний") patch.extraRoute2Type = "Регіональний";
+
+  if (Object.keys(patch).length) setParams({ ...params, ...patch });
+}, [
+  tableType,
+  params.mainText,
+  params.extraRoute1Type,
+  params.extraRoute2Type,
+  setParams,
+]);
+
+const routeLevelOptions = tableType === "seasonal"
+  ? ["Локальний", "Регіональний"]
+  : ["Локальний", "Регіональний", "Національний"];
+
+// базові опції вже враховують seasonal
+const extraRouteLevelOptions = React.useMemo(() => {
+  const base = tableType === "seasonal"
+    ? ["Локальний", "Регіональний"]
+    : ["Локальний", "Регіональний", "Національний"];
+
+  if (params.direction === "end") {
+    const arr = [];
+    // злитий пункт: value залишаємо "Регіональний", label показуємо злитий текст
+    if (base.includes("Локальний") || base.includes("Регіональний")) {
+      arr.push({ value: "Регіональний", label: "Регіональний / Локальний" });
     }
-  }, [tableType, params.mainText, setParams]);
+    if (base.includes("Національний")) {
+      arr.push({ value: "Національний", label: "Національний" });
+    }
+    return arr;
+  }
+
+  return base.map(v => ({ value: v, label: v }));
+}, [tableType, params.direction]);
+
+
+const normalizeRouteLevel = (v) =>
+  v === "Регіональний / Локальний" ? "Регіональний" : v;
 
 
   const allDirections = [
@@ -356,7 +417,7 @@ const getRightFreeSpacePx = (p) => {
   let categoryOptions = [...categoryOptionsRaw];
   if (params.direction === "end" && (categoryOptions.includes("Регіональний") || categoryOptions.includes("Локальний"))) {
     categoryOptions = categoryOptions.filter(item => item !== "Регіональний" && item !== "Локальний");
-    categoryOptions.unshift("Регіональний / локальний");
+    categoryOptions.unshift("Регіональний / Локальний");
   }
 
   const isBicycleRoute = params.icon === "bicycleRoute" || params.mainText === "Bеломаршрут";
@@ -395,7 +456,7 @@ const getRightFreeSpacePx = (p) => {
 
   return (
     <div className="space-y-2 w-full">
-      {isB7 && tableType !== "temporary" && tableType !== "seasonal" && temporaryToggleJSX}
+      {tableType !== "temporary" && tableType !== "seasonal" && temporaryToggleJSX}
       
       {params.isTemporaryRoute && isB7 && (
         <FormRow label="Застережний знак:">
@@ -483,7 +544,7 @@ const getRightFreeSpacePx = (p) => {
         <FormRow label="Категорія:">
           <Select value={params.mainText} onValueChange={handleMainTextChange}>
             <SelectTrigger className={inputClasses}>
-              <div className="truncate">{params.direction === "end" && (params.mainText === "Регіональний" || params.mainText === "Локальний") ? "Регіональний / локальний" : params.mainText || "Оберіть категорію"}</div>
+              <div className="truncate">{params.direction === "end" && (params.mainText === "Регіональний" || params.mainText === "Локальний") ? "Регіональний / Локальний" : params.mainText || "Оберіть категорію"}</div>
             </SelectTrigger>
             <SelectContent>
               {categoryOptions.map((item) => <SelectItem key={item} value={item} className="text-[13px]">{item}</SelectItem>)}
@@ -522,8 +583,6 @@ const getRightFreeSpacePx = (p) => {
           <Input inputMode="numeric" pattern="(\d{1,2}(,\d)?|\d{3})" value={params.distance ?? ""} onChange={handleDistanceChange} placeholder="Введіть значення від 0,1 до 999" className={inputClasses} />
         </FormRow>
       )}
-
-      {!isB7 && tableType !== "temporary" && tableType !== "seasonal" && temporaryToggleJSX}
       
       <>
 <FormRow label="Додаткові позначки:">
@@ -558,45 +617,48 @@ const getRightFreeSpacePx = (p) => {
             if (isTryingToAdd && activeKeys.length >= maxAllowed) return;
 
             // Увімкнення
-            if (isTryingToAdd) {
-              // Звичайні позначки — одразу перевірка overflow
-              if (key === "showEurovelo" || key === "showVeloParking" || key === "showVeloSTO") {
-                const speculativeParams = { ...params, [key]: true };
-                if (checkOverflowForSpeculativeParams(speculativeParams)) {
-                  setIconOverflowMessage("Недостатньо місця");
-                  return;
-                }
-                setParams({ ...params, [key]: true });
-                return;
-              }
+// ... усередині onClick
+if (isTryingToAdd) {
+  // ліміт кількості як і раніше
+  if (activeKeys.length >= maxAllowed) return;
 
-              // === VR1/VR2: PRE-CHECK МІНІМУМ 36 PX ВІЛЬНОГО ПРОСТОРУ ===
-              const freePx = getRightFreeSpacePx(params);
-              if (freePx < 36) {
-                setIconOverflowMessage("Недостатньо місця");
-                return;
-              }
+  // стандартні позначки — як було: одразу перевірка overflow
+  if (key === "showEurovelo" || key === "showVeloParking" || key === "showVeloSTO") {
+    const speculativeParams = { ...params, [key]: true };
+    if (checkOverflowForSpeculativeParams(speculativeParams)) {
+      setIconOverflowMessage("Недостатньо місця");
+      return;
+    }
+    setParams({ ...params, [key]: true });
+    return;
+  }
 
-              // якщо ок — вмикаємо і ініціалізуємо поля (тип/номер задасть користувач)
-              if (key === "showExtraRoute1") {
-                setParams({
-                  ...params,
-                  showExtraRoute1: true,
-                  extraRoute1Type: params.extraRoute1Type || "",
-                  extraRoute1Number: params.extraRoute1Number || "",
-                });
-                return;
-              }
-              if (key === "showExtraRoute2") {
-                setParams({
-                  ...params,
-                  showExtraRoute2: true,
-                  extraRoute2Type: params.extraRoute2Type || "",
-                  extraRoute2Number: params.extraRoute2Number || "",
-                });
-                return;
-              }
-            }
+  // === VR1/VR2: модельна перевірка переносу/вміщення ===
+  const which = key === "showExtraRoute1" ? 1 : 2;
+  if (!canOpenExtraRoute(params, which)) {
+    setIconOverflowMessage("Недостатньо місця");
+    return;
+  }
+
+  // відкриваємо настройки (тип/номер заповнить користувач)
+  if (which === 1) {
+    setParams({
+      ...params,
+      showExtraRoute1: true,
+      extraRoute1Type: params.extraRoute1Type || "",
+      extraRoute1Number: params.extraRoute1Number || "",
+    });
+  } else {
+    setParams({
+      ...params,
+      showExtraRoute2: true,
+      extraRoute2Type: params.extraRoute2Type || "",
+      extraRoute2Number: params.extraRoute2Number || "",
+    });
+  }
+  return;
+}
+
 
             // Вимкнення
             const next = { ...params, [key]: false };
@@ -616,25 +678,67 @@ const getRightFreeSpacePx = (p) => {
             undefined
           }
         >
-          {iconKey ? (
-            (() => {
-              const icon = PathConfigs[iconKey];
-              return (
-                <svg
-                  width={20}
-                  height={20}
-                  viewBox={`0 0 ${icon.width} ${icon.height}`}
-                  className={`mx-auto ${isActive ? "text-white" : "text-gray-700"}`}
-                >
-                  <path d={icon.d} fill="currentColor" fillRule="evenodd" />
-                </svg>
-              );
-            })()
-          ) : (
-            <span className={`text-[10px] font-medium select-none ${isActive ? "text-white" : "text-gray-700"}`}>
-              {label}
-            </span>
-          )}
+
+{iconKey ? (
+  // стандартні іконки (EU / P / STO) — без змін
+  (() => {
+    const icon = PathConfigs[iconKey];
+    return (
+      <svg
+        width={20}
+        height={20}
+        viewBox={`0 0 ${icon.width} ${icon.height}`}
+        className={`mx-auto ${isActive ? "text-white" : "text-gray-700"}`}
+      >
+        <path d={icon.d} fill="currentColor" fillRule="evenodd" />
+      </svg>
+    );
+  })()
+) : (
+  // === VR1 / VR2: залитий скруглений прямокутник 15×20 з “виколотою” цифрою ===
+  <svg
+    width={20}
+    height={20}
+    viewBox="0 0 20 20"
+    className={`mx-auto ${isActive ? "text-white" : "text-gray-700"}`}
+  >
+    {/* Маска: білим показуємо прямокутник, а текстом (чорним) “вирізаємо” цифру */}
+    <defs>
+      <mask id={`vr-mask-${key}`}>
+        {/* все полотно спершу чорне (невидиме) */}
+        <rect x="0" y="0" width="20" height="20" fill="black" />
+        {/* сам прямокутник 15×20 зі скругленням r=3 — робимо видимим */}
+        <rect x="2.5" y="0" width="15" height="20" rx="3" ry="3" fill="white" />
+        {/* цифра як “дірка” — чорним по масці, тому буде вирізана */}
+        <text
+          x="10"            /* центр по X = 10, але легкий оптичний тул на 2 пікселі вправо виглядає краще; хочеш — постав 10 */
+          y="11"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="11"
+          fontWeight="700"
+          fill="black"
+        >
+          {key === "showExtraRoute1" ? "1" : "2"}
+        </text>
+      </mask>
+    </defs>
+
+    {/* Заливка currentColor + маска вирізає цифру */}
+    <rect
+      x="2.5"
+      y="0"
+      width="15"
+      height="20"
+      rx="3"
+      ry="3"
+      fill="currentColor"
+      mask={`url(#vr-mask-${key})`}
+    />
+  </svg>
+)}
+
+
         </button>
       );
     })}
@@ -645,7 +749,7 @@ const getRightFreeSpacePx = (p) => {
 
 {/* Налаштування для Веломаршрут 1 */}
 {params.showExtraRoute1 && (
-  <FormRow label="Дод. веломаршрут 1:">
+  <FormRow label="Перетин з веломаршрутом 1:">
     <div className="grid grid-cols-1 md:grid-cols-3 gap-2 w-full">
       {/* 2/3: рівень маршруту */}
       <div className="md:col-span-2">
@@ -656,13 +760,16 @@ const getRightFreeSpacePx = (p) => {
           <SelectTrigger className={`${inputClasses} lg:w-full`}>
             <SelectValue placeholder="Оберіть рівень" />
           </SelectTrigger>
-          <SelectContent>
-            {["Локальний", "Регіональний", "Національний"].map((t) => (
-              <SelectItem key={t} value={t} className="text-[13px]">
-                {t}
-              </SelectItem>
-            ))}
-          </SelectContent>
+<SelectContent>
+  {extraRouteLevelOptions.map(opt => (
+    <SelectItem key={opt.value} value={opt.value} className="text-[13px]">
+      {opt.label}
+    </SelectItem>
+  ))}
+</SelectContent>
+
+
+
         </Select>
       </div>
 
@@ -683,7 +790,7 @@ const getRightFreeSpacePx = (p) => {
 
 {/* Налаштування для Веломаршрут 2 */}
 {params.showExtraRoute2 && (
-  <FormRow label="Дод. веломаршрут 2:">
+  <FormRow label="Перетин з веломаршрутом 2:">
     <div className="grid grid-cols-1 md:grid-cols-3 gap-2 w-full">
       {/* 2/3: рівень маршруту */}
       <div className="md:col-span-2">
@@ -694,13 +801,14 @@ const getRightFreeSpacePx = (p) => {
           <SelectTrigger className={`${inputClasses} lg:w-full`}>
             <SelectValue placeholder="Оберіть рівень" />
           </SelectTrigger>
-          <SelectContent>
-            {["Локальний", "Регіональний", "Національний"].map((t) => (
-              <SelectItem key={t} value={t} className="text-[13px]">
-                {t}
-              </SelectItem>
-            ))}
-          </SelectContent>
+<SelectContent>
+  {extraRouteLevelOptions.map(opt => (
+    <SelectItem key={opt.value} value={opt.value} className="text-[13px]">
+      {opt.label}
+    </SelectItem>
+  ))}
+</SelectContent>
+
         </Select>
       </div>
 

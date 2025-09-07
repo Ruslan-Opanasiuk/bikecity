@@ -131,7 +131,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 px-4">
-      <main className="grid grid-cols-1 lg:grid-cols-[170px_434px_450px_200px] gap-4 max-w-screen-2xl mx-auto justify-center items-start">
+      <main className="grid grid-cols-1 lg:grid-cols-[170px_434px_500px_250px] gap-4 max-w-screen-2xl mx-auto justify-center items-start">
         <header className="col-span-full p-4 order-first">
           <h1 className="text-[24px] font-bold text-left flex items-center gap-4">
             <div className="flex-shrink-0">
