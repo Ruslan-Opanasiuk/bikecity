@@ -36,26 +36,40 @@ function B7Item({
   // --- Кольори та константи ---
   const TEMP_COLOR = "#F5C30D";    // Жовтий для сезонних
   const REGIONAL_COLOR = "#D42E12"; // Червоний для регіональних
-  const BLACK_COLOR = "#000000";   // Чорний за замовчуванням
+  const BLACK_COLOR = "#000000";    // Чорний за замовчуванням
   const WHITE_COLOR = "#FFFFFF";
 
   // --- Обчислення станів та логіки ---
   const isTemporaryRoute = params.isTemporaryRoute === true;
-  const temporaryOffset = params.isTemporaryRoute === true ? 63 : 0;
+  const temporaryOffset = isTemporaryRoute ? 63 : 0;
   const isSeasonal = params.tableType === "seasonal";
 
   // Визначаємо акцентний колір з урахуванням пріоритетів
   const accentColor = isSeasonal ? TEMP_COLOR : (params.numberType === "regional" ? REGIONAL_COLOR : BLACK_COLOR);
-  
+
+  // Мапінг спеціального кейсу: "streetNetwork" у центр міста
   let iconKey = params.icon;
   if (iconKey === "streetNetwork" && params.isUrbanCenter) {
     iconKey = "cityCentre";
   }
 
   const iconConfig = iconKey ? PathConfigs[iconKey] : null;
-  const ribbonIcons = new Set(["cityCentre", "bridge", "interchange", "bicycleRoute"]);
-  const isRibbonIcon = ribbonIcons.has(iconKey);
-  const shouldHaveColoredDot = !isRibbonIcon;
+
+  /**
+   * Іконки, які РЕНДЕРЯТЬСЯ НА СТРІЧЦІ (на вертикалі, на лінії x≈95.5)
+   * Тобто саме вони можуть "замінити" виколоте кільце.
+   * ВАЖЛИВО: bicycleRoute тут ВИКЛЮЧЕНО — бо це не “інша” піктограма.
+   */
+  const ribbonOnLineIcons = new Set(["cityCentre", "interchange", "bridge"]);
+
+  /**
+   * Іконки, для яких ми взагалі показуємо круглий маркер (стрічку).
+   * Міст ("bridge") окремо обробляємо — без будь-якого маркера.
+   */
+  const ribbonCircleIcons = new Set(["cityCentre", "interchange", "bicycleRoute"]);
+
+  // Чи показувати кольорову "крапку" (внутрішнє заповнення) замість вибивки/кільця
+  const shouldHaveColoredDot = iconKey ? !ribbonCircleIcons.has(iconKey) : true;
 
   // --- Розрахунок SVG-шляхів для тексту (мемоізовано) ---
   const {
@@ -70,7 +84,12 @@ function B7Item({
 
   const mainTextPaths = useMemo(() => {
     return mainTextLines.map((line, i) => {
-      const baselineY = mainTextLines.length === 1 ? 50 - BASE_FONT_SIZE_PRIMARY / 2 : (i === 0 ? 50 - BASE_FONT_SIZE_PRIMARY / 2 : 100 - BASE_FONT_SIZE_PRIMARY / 2);
+      const baselineY =
+        mainTextLines.length === 1
+          ? 50 - BASE_FONT_SIZE_PRIMARY / 2
+          : (i === 0
+              ? 50 - BASE_FONT_SIZE_PRIMARY / 2
+              : 100 - BASE_FONT_SIZE_PRIMARY / 2);
       return textToPath(roadUABold, line, fontSize1, textX, baselineY, "left", "visualX");
     });
   }, [mainTextLines, fontSize1, textX]);
@@ -80,108 +99,109 @@ function B7Item({
     return textToPath(roadUAMedium, secondaryLine, fontSize2, textX, baselineY, "left", "visualX");
   }, [secondaryLine, fontSize2, textX, mainTextLines.length]);
 
-  const iconBaseY = (isTemporaryRoute && mainTextLines.length > 1) ? 75 : (isTemporaryRoute && params.icon === 'water' ? 67 : 50);
+  const iconBaseY = (isTemporaryRoute && mainTextLines.length > 1)
+    ? 75
+    : (isTemporaryRoute && params.icon === "water" ? 67 : 50);
 
-    const kmTextPath = useMemo(() => {
-    return textToPath(roadUABold, 
-      params.distance, 
-      23, 
-      41.5, 
-      isTemporaryRoute ? iconBaseY : 50, 
-      "center", 
-      "visualX");
-  }, [params.distance, isTemporaryRoute, iconBaseY]);
-  
-// після iconKey / iconConfig / shouldHaveColoredDot:
-const hasExtraBikeRoute = Boolean(params.showExtraRoute1 || params.showExtraRoute2);
-
-// 🔸 кільце показуємо: 1) завжди для bicycleRoute; 2) для VR1/VR2 лише якщо немає внутрішньої іконки
-const wantsBicycleRing =
-  iconKey === "bicycleRoute" || (hasExtraBikeRoute && !iconConfig);
-
-const circleProps = useMemo(() => {
-  let config = CircleConfigs["B7"];
-  if (wantsBicycleRing) {
-    config = CircleConfigs["B7bicycle"];      // «дірчасте» кільце
-  } else if (iconKey === "cityCentre") {
-    config = CircleConfigs["B7citycentre"];
-  } else if (iconKey === "interchange") {
-    config = CircleConfigs["B7interchange"];
-  }
-
-  const isSpecialTempCase =
-    params.isTemporaryRoute && (iconKey === "cityCentre" || iconKey === "interchange");
-
-  const finalInnerColor = isSpecialTempCase
-    ? TEMP_COLOR
-    : (wantsBicycleRing
-        ? WHITE_COLOR     // для кільця – вибивка всередині
-        : (shouldHaveColoredDot ? accentColor : WHITE_COLOR));
-
-  return {
-    config,
-    outerColor: BLACK_COLOR,
-    innerColor: finalInnerColor,
-    cx: 95.5 + temporaryOffset,
-    cy: iconBaseY,
-  };
-}, [
-  iconKey,
-  iconConfig,            // 🔹 додали залежність
-  shouldHaveColoredDot,
-  accentColor,
-  temporaryOffset,
-  params.isTemporaryRoute,
-  mainTextLines.length,
-  params.icon,
-  wantsBicycleRing,      // 🔹 додали залежність
-]);
-
-
-
-    const MultiColorSignPreview = ({ config, size = 45 }) => (
-      <svg width={size} height={size} viewBox={config.viewBox}>
-        {config.paths.map((path, index) => (
-          <path key={index} d={path.d} fill={path.color} transform={path.transform || ''} fillRule={path.fillRule || 'nonzero'}/>
-        ))}
-      </svg>
+  const kmTextPath = useMemo(() => {
+    return textToPath(
+      roadUABold,
+      params.distance,
+      23,
+      41.5,
+      isTemporaryRoute ? iconBaseY : 50,
+      "center",
+      "visualX"
     );
+  }, [params.distance, isTemporaryRoute, iconBaseY]);
 
-    // B7Item.js
+  // --- ЛОГІКА ВИКОЛОТОГО КІЛЬЦЯ (fixed) ---
+  const hasExtraBikeRoute = Boolean(params.showExtraRoute1 || params.showExtraRoute2);
+  const intersectsBike = iconKey === "bicycleRoute" || hasExtraBikeRoute;
 
+  // якщо є перетин з веломаршрутом — показуємо виколоте кільце,
+  // ОКРІМ випадку, коли є інша піктограма, що розташовується на стрічці (ribbonOnLineIcons)
+  const wantsBicycleRing = intersectsBike && !(iconKey && ribbonOnLineIcons.has(iconKey));
+
+  const circleProps = useMemo(() => {
+    let config = CircleConfigs["B7"];
+    if (wantsBicycleRing) {
+      config = CircleConfigs["B7bicycle"]; // «дірчасте» кільце
+    } else if (iconKey === "cityCentre") {
+      config = CircleConfigs["B7citycentre"];
+    } else if (iconKey === "interchange") {
+      config = CircleConfigs["B7interchange"];
+    }
+
+    const isSpecialTempCase =
+      isTemporaryRoute && (iconKey === "cityCentre" || iconKey === "interchange");
+
+    const finalInnerColor = isSpecialTempCase
+      ? TEMP_COLOR
+      : (wantsBicycleRing
+          ? WHITE_COLOR // для кільця – вибивка всередині
+          : (shouldHaveColoredDot ? accentColor : WHITE_COLOR));
+
+    return {
+      config,
+      outerColor: BLACK_COLOR,
+      innerColor: finalInnerColor,
+      cx: 95.5 + temporaryOffset,
+      cy: iconBaseY,
+    };
+  }, [
+    iconKey,
+    shouldHaveColoredDot,
+    accentColor,
+    temporaryOffset,
+    isTemporaryRoute,
+    wantsBicycleRing,
+    iconBaseY,
+  ]);
+
+  const MultiColorSignPreview = ({ config, size = 45 }) => (
+    <svg width={size} height={size} viewBox={config.viewBox}>
+      {config.paths.map((path, index) => (
+        <path
+          key={index}
+          d={path.d}
+          fill={path.color}
+          transform={path.transform || ""}
+          fillRule={path.fillRule || "nonzero"}
+        />
+      ))}
+    </svg>
+  );
 
   const TempRoutePaths = {
-    diagonalUp: 'M 95.5 0 Q 158.5 0, 158.5 75',       // Дуга знизу вгору
-    diagonalDown: 'M 95.5 150 Q 158.5 150, 158.5 75', // Дуга зверху вниз
-    lineFull: 'M 158.5 0 V 150',                      // Повна вертикальна лінія
-    lineHalfDown: 'M 158.5 0 V 75',                   // Лінія зверху до центру
-    lineHalfUp: 'M 158.5 75 V 150',                   // Лінія з центру донизу
+    diagonalUp: "M 95.5 0 Q 158.5 0, 158.5 75",       // Дуга знизу вгору
+    diagonalDown: "M 95.5 150 Q 158.5 150, 158.5 75", // Дуга зверху вниз
+    lineFull: "M 158.5 0 V 150",                      // Повна вертикальна лінія
+    lineHalfDown: "M 158.5 0 V 75",                   // Лінія зверху до центру
+    lineHalfUp: "M 158.5 75 V 150",                   // Лінія з центру донизу
   };
 
   // --- Рендер компонента ---
   return (
     <g transform={transform || `translate(${x}, ${y})`}>
 
-      {/* === НОВА ЛОГІКА ДЛЯ ВЕРТИКАЛЬНОЇ ЛІНІЇ (НЕ ТИМЧАСОВІ) === */}
+      {/* === ВЕРТИКАЛЬНА ЛІНІЯ ДЛЯ НЕ ТИМЧАСОВИХ === */}
       {!isTemporaryRoute && (
         <>
-          {/* Перший елемент: лінія від центру до низу */}
           {isFirst && (
             <path
-              d={`M 95.5 ${50-9} V ${itemHeight+9}`}
+              d={`M 95.5 ${50 - 9} V ${itemHeight + 9}`}
               stroke={accentColor}
               strokeWidth="6"
             />
           )}
-          {/* Останній елемент: лінія зверху до центру */}
           {isLast && (
             <path
-              d={`M 95.5 0 V ${59}`}
+              d={`M 95.5 0 V 59`}
               stroke={accentColor}
               strokeWidth="6"
             />
           )}
-          {/* Середній елемент: повна лінія */}
           {!isFirst && !isLast && (
             <path
               d={`M 95.5 0 V ${itemHeight}`}
@@ -192,11 +212,6 @@ const circleProps = useMemo(() => {
         </>
       )}
 
-      {/* <rect x={572} y={0} width={28} height={150} fill={"red"} /> */}
-      {/* <rect x={0} y={iconBaseY-0.5} width={600} height={1} fill={"black"} />
-      <rect x={158} y={0} width={1} height={150} fill={"black"} />
-      <rect x={95} y={0} width={1} height={150} fill={"black"} /> */}
-
       {/* Основний текст (1 або 2 рядки) */}
       {mainTextPaths.map((d, i) => <path key={i} d={d} fill={BLACK_COLOR} />)}
 
@@ -206,43 +221,38 @@ const circleProps = useMemo(() => {
       {/* Текст відстані в кілометрах */}
       <path d={kmTextPath} fill={BLACK_COLOR} />
 
-
+      {/* === ТИМЧАСОВИЙ МАРШРУТ (штрихи) === */}
       {temporaryStatus && (() => {
-        // Розраховуємо вертикальний зсув на основі різниці висот
         const yOffset = (itemHeight - 150) / 2;
-        
         return (
-          <g 
-            transform={`translate(0, ${yOffset})`} 
-            fill="none" 
-            stroke={accentColor} 
-            strokeWidth="6" 
+          <g
+            transform={`translate(0, ${yOffset})`}
+            fill="none"
+            stroke={accentColor}
+            strokeWidth="6"
             strokeLinecap="round"
           >
-            
-            {/* --- ДОДАНО НОВУ ЛІНІЮ --- */}
-           <path
-              d='M 95.5 0 V 150'
+            <path
+              d="M 95.5 0 V 150"
               strokeDasharray="15 10"
               strokeLinecap="butt"
             />
-            {/* Логіка для дуг та суцільних ліній залишається */}
-            {temporaryStatus === 'standalone' && (
+            {temporaryStatus === "standalone" && (
               <>
                 <path d={TempRoutePaths.diagonalUp} />
                 <path d={TempRoutePaths.diagonalDown} />
               </>
             )}
-            {temporaryStatus === 'start' && (
+            {temporaryStatus === "start" && (
               <>
                 <path d={TempRoutePaths.diagonalUp} />
                 <path d={TempRoutePaths.lineHalfUp} />
               </>
             )}
-            {temporaryStatus === 'middle' && (
+            {temporaryStatus === "middle" && (
               <path d={TempRoutePaths.lineFull} />
             )}
-            {temporaryStatus === 'end' && (
+            {temporaryStatus === "end" && (
               <>
                 <path d={TempRoutePaths.lineHalfDown} />
                 <path d={TempRoutePaths.diagonalDown} />
@@ -252,15 +262,18 @@ const circleProps = useMemo(() => {
         );
       })()}
 
-
-      {/* Кругла іконка-маркер (не малюємо для мостів) */}
-      {(isRibbonIcon || shouldHaveColoredDot) && iconKey !== 'bridge' ? (
-        <CircleRenderer {...circleProps} />
+      {/* Кругла іконка-маркер (міст не малюємо) */}
+      {( (iconKey && iconKey !== "bridge" && ribbonCircleIcons.has(iconKey)) || shouldHaveColoredDot ) ? (
+        iconKey === "bridge" ? null : <CircleRenderer {...circleProps} />
       ) : null}
 
       {/* SVG-іконка всередині маркера */}
       {iconConfig && (
-        <g transform={`translate(${iconRenderX}, ${iconBaseY - (iconConfig.height * iconConfig.scale2) / 2}) scale(${iconConfig.scale2})`}>
+        <g
+          transform={`translate(${iconRenderX}, ${
+            iconBaseY - (iconConfig.height * iconConfig.scale2) / 2
+          }) scale(${iconConfig.scale2})`}
+        >
           <path d={iconConfig.d} fill={BLACK_COLOR} fillRule="evenodd" />
         </g>
       )}
@@ -279,17 +292,15 @@ const circleProps = useMemo(() => {
         </g>
       )}
 
-    {/* === НОВИЙ БЛОК ДЛЯ ПОПЕРЕДЖУВАЛЬНИХ ЗНАКІВ === */}
-    {params.warningSignType && MultiColorPathConfigs[params.warningSignType] && (
-      <g transform={`translate(73, ${iconBaseY-22.5})`}>
-        <MultiColorSignPreview 
-          config={MultiColorPathConfigs[params.warningSignType]}
-          size={45}
-          
-        />
-      </g>
-    )}
-
+      {/* Попереджувальні знаки (багатокольорові) */}
+      {params.warningSignType && MultiColorPathConfigs[params.warningSignType] && (
+        <g transform={`translate(73, ${iconBaseY - 22.5})`}>
+          <MultiColorSignPreview
+            config={MultiColorPathConfigs[params.warningSignType]}
+            size={45}
+          />
+        </g>
+      )}
 
       {/* Бейджі з номерами маршрутів */}
       <RouteBadgeGroup
@@ -297,8 +308,6 @@ const circleProps = useMemo(() => {
         x={routeBadgeX}
         y={mainTextLines.length === 1 ? 12 : 37}
       />
-
-
     </g>
   );
 }
