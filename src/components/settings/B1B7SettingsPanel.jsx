@@ -9,6 +9,7 @@ import {
   SelectItem,
   SelectValue,
 } from "../ui/select";
+import VeloRouteInputGroup from "./VeloRouteInputGroup"; 
 
 function B1B7SettingsPanel({
   label,
@@ -82,10 +83,9 @@ function B1B7SettingsPanel({
     if (params.tableType === "permanent" && !isB4 && !isB7) {
       options.push({ value: "eurovelo", label: "Eurovelo 4" });
     }
-    return options;
+    return options.map(opt => (typeof opt === 'string' ? { value: opt, label: opt } : opt));
   };
   
-  // --- ЗМІНА 1: Розширено об'єкт назв ---
   const signNames = {
     B1: "Номер і напрямок веломаршруту",
     B2: "Кінець веломаршруту",
@@ -96,36 +96,23 @@ function B1B7SettingsPanel({
     B7: "Схема веломаршруту",
   };
 
-  // --- ЗМІНА 2: Додано логіку для динамічного заголовка ---
   const { displayLabel, displaySignName } = useMemo(() => {
     const baseSignType = label.split(' ')[1].replace(':', '');
     
     if (baseSignType === 'B4' && params.b4Items) {
       const itemCount = params.b4Items.length;
-      let effectiveSign = { type: 'B.4', name: signNames['B4'] }; // За замовчуванням
+      let effectiveSign = { type: 'B.4', name: signNames['B4'] };
       
       switch (itemCount) {
-        case 2:
-          effectiveSign = { type: 'B.5', name: signNames['B5'] };
-          break;
-        case 3:
-          effectiveSign = { type: 'B.6', name: signNames['B6'] };
-          break;
-        default:
-          effectiveSign = { type: 'B.4', name: signNames['B4'] };
+        case 2: effectiveSign = { type: 'B.5', name: signNames['B5'] }; break;
+        case 3: effectiveSign = { type: 'B.6', name: signNames['B6'] }; break;
+        default: effectiveSign = { type: 'B.4', name: signNames['B4'] };
       }
-      return {
-        displayLabel: `Налаштування ${effectiveSign.type}:`,
-        displaySignName: effectiveSign.name
-      };
+      return { displayLabel: `Налаштування ${effectiveSign.type}:`, displaySignName: effectiveSign.name };
 
     } else {
-      // Логіка для всіх інших знаків (B1, B2, B3, B7)
       const dottedSignType = baseSignType ? `B.${baseSignType.slice(1)}` : '';
-      return {
-        displayLabel: `Налаштування ${dottedSignType}:`,
-        displaySignName: signNames[baseSignType]
-      };
+      return { displayLabel: `Налаштування ${dottedSignType}:`, displaySignName: signNames[baseSignType] };
     }
   }, [label, params.b4Items, signNames]);
 
@@ -134,7 +121,6 @@ function B1B7SettingsPanel({
 
   return (
     <div className="p-0 w-full">
-      {/* --- ЗМІНА 3: Оновлено JSX для відображення заголовка --- */}
       <h2 className="text-[16px] font-bold mb-0 text-left">
         {displayLabel}
         <span className="text-[15px] font-normal ml-1">{displaySignName}</span>
@@ -151,14 +137,10 @@ function B1B7SettingsPanel({
         </div>
       )}
 
-
       <div className="space-y-2">
-        {/* --- Основні налаштування --- */}
         <FormRow label="Тип таблички:">
           <Select value={params.tableType} onValueChange={handleTableTypeChange}>
-            <SelectTrigger className={inputStyles}>
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger className={inputStyles}><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="permanent" className="text-[13px]">Постійний</SelectItem>
               <SelectItem value="seasonal" className="text-[13px]">Сезонний</SelectItem>
@@ -167,33 +149,17 @@ function B1B7SettingsPanel({
           </Select>
         </FormRow>
 
-        <FormRow label="Рівень маршруту:">
-          <Select value={params.numberType} onValueChange={handleNumberTypeChange}>
-            <SelectTrigger className={inputStyles}><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {getNumberTypeOptions().map((opt) => (
-                <SelectItem key={opt.value} value={opt.value} className="text-[13px]">
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <FormRow label="Рівень і номер:">
+          <VeloRouteInputGroup
+            routeType={params.numberType}
+            onRouteTypeChange={handleNumberTypeChange}
+            routeNumber={params.routeNumber}
+            onRouteNumberChange={handleRouteNumberChange}
+            levelOptions={getNumberTypeOptions()}
+            inputClasses={inputStyles}
+            allowNone={true}
+          />
         </FormRow>
-
-        {params.numberType !== "none" && (
-          <FormRow label="Номер маршруту:">
-            <Input
-              type="text"
-              inputMode="numeric"
-              pattern="\d*"
-              value={params.routeNumber || ""}
-              onChange={handleRouteNumberChange}
-              disabled={params.numberType === "eurovelo"}
-              placeholder="Введіть цифру від 1 до 99"
-              className={inputStyles}
-            />
-          </FormRow>
-        )}
 
         {enableDirection && (
           <FormRow label="Напрямок:">
@@ -257,7 +223,6 @@ function B1B7SettingsPanel({
           </FormRow>
         )}
 
-
         {isB7 && (
           <FormRow label={`Кількість обʼєктів: ${params.objectCount || 4}`}>
             {(() => {
@@ -275,7 +240,6 @@ function B1B7SettingsPanel({
 
               return (
                 <div className="h-9 pt-3.5">
-                  {/* --- ЗМІНА ТУТ --- */}
                   <div className="flex flex-col w-full lg:w-[250px]">
                     <input
                       type="range"
@@ -298,7 +262,6 @@ function B1B7SettingsPanel({
           </FormRow>
         )}
 
-
         {(isB4 || isB7) && ((params.b4Items?.length ?? 0) >= 2 || (params.objectCount ?? 0) >= 2) && (
           <FormRow label="">
             <label htmlFor="forceUniformTextSize" className="inline-flex items-center cursor-pointer gap-3">
@@ -317,7 +280,6 @@ function B1B7SettingsPanel({
             </label>
           </FormRow>
         )}
-
       </div>
     </div>
   );
