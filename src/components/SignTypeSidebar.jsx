@@ -1,19 +1,21 @@
+import React from "react";
+
 function SignTypeSidebar({ signType, setSignType }) {
   const plates = ["B1"];
   const signs = ["B2", "B3", "B4", "B7"];
-  const horizontal = ["Г1"];
+  const horizontal = ["G1"];
 
   const formatSignType = (type) => {
+    // 1. ЗМІНЕНО: Назва для G1 тепер "Г.1-Г.4"
+    if (type === 'G1') return 'Г.1-Г.4'; 
     if (type === 'B4') return 'B.4-B.6';
     if (type.startsWith('B')) return `B.${type.slice(1)}`;
     return type;
   };
 
-  // --- ЗМІНА 1: Додаємо параметр 'indented' ---
   const renderButtonList = (items, indented = false) => (
     <ul className="space-y-[1px]">
       {items.map((type) => (
-        // --- ЗМІНА 2: Використовуємо 'indented' для задання класу ---
         <li key={type} className={indented ? 'pl-4' : ''}>
           <button
             onClick={() => setSignType(type)}
@@ -58,7 +60,8 @@ function SignTypeSidebar({ signType, setSignType }) {
         <h3 className="text-[14px] text-gray-500 mb-2">
           Горизонтальне ВМО
         </h3>
-        {renderButtonList(horizontal)}
+        {/* 2. ДОДАНО: 'true' для відступу, як у "Таблички" та "Знаки" */}
+        {renderButtonList(horizontal, true)}
       </div>
     </aside>
   );

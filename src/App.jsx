@@ -4,6 +4,7 @@ import SignTypeSidebar from "./components/SignTypeSidebar";
 import SignPreview from "./components/SignPreview";
 import B1B7SettingsPanel from "./components/settings/B1B7SettingsPanel";
 import B4B7ItemsPanel from "./components/settings/B4B7ItemSettings";
+import G1SettingsPanel from "./components/settings/G1SettingsPanel";
 import ExportBlock from "./components/ExportBlock";
 import { exportSVG, exportPNG, exportPDF } from "./utils/exportHelpers";
 import PathConfigs from "./config/PathConfigs";
@@ -14,11 +15,15 @@ import {
   defaultB7Params,
 } from "./config/defaultParams";
 
-// Імпортуємо допоміжні функції для обчислення макету
 import { computeTextLayout } from "./utils/TextLayout";
 import { getRouteBadgeGroupWidth } from "./components/svg/RouteBadgeGroup";
 
-// Додаємо конфігурацію для іконок, які не є стрічковими
+const defaultG1Params = {
+  numberType: 'national',
+  routeNumber: '',
+  markingType: 'B.1'
+};
+
 const ribbonOrCircleIcons = new Set([
   "cityCentre", "bridge", "interchange", "bicycleRoute", "district", "other", "water", "streetNetwork"
 ]);
@@ -46,9 +51,6 @@ function App() {
   const [signType, setSignType] = useState("B1");
   const [params, setParams] = useState(defaultB1B3Params);
   const [signSize, setSignSize] = useState(null);
-  const [fontSizes, setFontSizes] = useState([]);
-
-  // --- НОВИЙ СТАН ДЛЯ ВІДСТЕЖЕННЯ ПЕРЕПОВНЕННЯ ---
   const [isTooLongArr, setIsTooLongArr] = useState([]);
 
   const isB1toB3 = ["B1", "B2", "B3"].includes(signType);
@@ -61,6 +63,8 @@ function App() {
     if (["B1", "B2", "B3"].includes(newType)) setParams({ ...defaultB1B3Params });
     else if (newType === "B4") setParams({ ...defaultB4Params });
     else if (newType === "B7") setParams({ ...defaultB7Params });
+    // ВИПРАВЛЕНО ТУТ: "Г1" на "G1"
+    else if (newType === "G1") setParams({ ...defaultG1Params });
     else setParams({});
   };
 
@@ -93,12 +97,9 @@ function App() {
     }
   }, [params.tableType]);
 
-  // --- НОВИЙ ЕФЕКТ ДЛЯ ОБЧИСЛЕННЯ ПЕРЕПОВНЕННЯ ---
   useEffect(() => {
     if (isB4orB7 && safeParams.b4Items) {
       const newIsTooLongArr = safeParams.b4Items.map(itemParams => {
-        // Логіка для розрахунку availableTextWidthMain
-        // (скопійована з компонента B7, оскільки вона універсальна)
         const iconKey = itemParams.icon === "streetNetwork" && itemParams.isUrbanCenter ? "cityCentre" : itemParams.icon;
         const iconConfig = iconKey ? PathConfigs[iconKey] : null;
         const isRibbonOrCircle = !ribbonOrCircleIcons.has(iconKey);
@@ -109,7 +110,6 @@ function App() {
         const availableTextWidthMain = 600 - 28 - textX - badgeGroupWidth;
         const availableTextWidthSecondary = 600 - 28 - textX;
         
-        // Викликаємо computeTextLayout для перевірки з усіма параметрами
         const layout = computeTextLayout({
           ...safeParams,
           ...itemParams,
@@ -127,7 +127,7 @@ function App() {
     } else {
       setIsTooLongArr([]);
     }
-}, [isB4orB7, safeParams]);;
+}, [isB4orB7, safeParams]);
 
   return (
     <div className="min-h-screen bg-gray-50 px-4">
@@ -155,30 +155,39 @@ function App() {
             signType={signType}
             params={safeParams}
             setSignSize={setSignSize}
-            onFontRender={setFontSizes}
           />
         </div>
 
         <div className="p-4 flex flex-col gap-4 order-2 lg:order-none">
-          {usesB1B6Panel && (
-            <B1B7SettingsPanel
-              label={`Налаштування ${signType}:`}
+          {/* ВИПРАВЛЕНО ТУТ: "Г1" на "G1" */}
+          {signType === "G1" ? (
+            <G1SettingsPanel
               params={safeParams}
               setParams={setParamsAndStore}
-              enableDirection={enableDirection}
               signSize={signSize}
             />
-          )}
-          {isB4orB7 && safeParams.b4Items && (
-            <B4B7ItemsPanel
-              key={signType}
-              items={safeParams.b4Items}
-              setItemParams={(i, newItem) => updateB4Item(i, newItem)}
-              tableType={safeParams.tableType}
-              isB7={signType === "B7"}
-              // --- ПЕРЕДАЄМО НОВИЙ МАСИВ ЗІ СТАНОМ ПЕРЕПОВНЕННЯ ---
-              isTooLongArr={isTooLongArr}
-            />
+          ) : (
+            <>
+              {usesB1B6Panel && (
+                <B1B7SettingsPanel
+                  label={`Налаштування ${signType}:`}
+                  params={safeParams}
+                  setParams={setParamsAndStore}
+                  enableDirection={enableDirection}
+                  signSize={signSize}
+                />
+              )}
+              {isB4orB7 && safeParams.b4Items && (
+                <B4B7ItemsPanel
+                  key={signType}
+                  items={safeParams.b4Items}
+                  setItemParams={(i, newItem) => updateB4Item(i, newItem)}
+                  tableType={safeParams.tableType}
+                  isB7={signType === "B7"}
+                  isTooLongArr={isTooLongArr}
+                />
+              )}
+            </>
           )}
         </div>
 

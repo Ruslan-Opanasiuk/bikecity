@@ -91,8 +91,19 @@ const RectConfigs = {
     outerWidth: 586,
     outerRadius: 41,
     strokeWidth: 6
+  },
+  shortG1: {
+    outerHeight: 600,
+    outerWidth: 450,
+    outerRadius: 90,
+    strokeWidth: 50
+  },
+  longG1: {
+    outerHeight: 600,
+    outerWidth: 700,
+    outerRadius: 90,
+    strokeWidth: 50
   }
-
 }
 
 export default RectConfigs;

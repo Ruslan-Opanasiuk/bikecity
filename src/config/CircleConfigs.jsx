@@ -26,6 +26,10 @@ const CircleConfigs = {
   B7interchange: {
     outerRadius: 16,
     strokeWidth: 0
+  },
+  G1: {
+    outerRadius: 325,
+    strokeWidth: 0
   }
 }
 

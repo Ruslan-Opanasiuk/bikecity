@@ -1,16 +1,24 @@
-// src/utils/exportHelpers.js
 import { createRoot } from "react-dom/client";
 import { saveAs } from "file-saver";
 import jsPDF from 'jspdf';
 import SignPreview from "../components/SignPreview";
 
-// --- НОВА ДОПОМІЖНА ФУНКЦІЯ ---
-// Визначає тип знаку (B4, B5, або B6) на основі кількості елементів
+// 1. ОНОВЛЕНО ФУНКЦІЮ ДЛЯ ВИЗНАЧЕННЯ НАЗВИ
 const getEffectiveSignType = (signType, params) => {
   if (signType === 'B4' && params.b4Items) {
     const itemCount = params.b4Items.length;
     if (itemCount === 2) return 'B5';
     if (itemCount === 3) return 'B6';
+  }
+  // Додана логіка для Г.1-Г.4
+  if (signType === 'G1') {
+    const titleMap = {
+      national: 'Г1',
+      regional: 'Г2',
+      local: 'Г3',
+      temporary: 'Г4',
+    };
+    return titleMap[params.numberType] || signType;
   }
   return signType;
 };
@@ -41,8 +49,11 @@ export const exportSVG = async (signType, params) => {
 
   const fullWidth = parseFloat(svgNode.getAttribute("width"));
   const fullHeight = parseFloat(svgNode.getAttribute("height"));
-  const signWidth = Math.round(fullWidth - 2);
-  const signHeight = Math.round(fullHeight - 2);
+  
+  // 2. ОНОВЛЕНО РОЗРАХУНОК РОЗМІРУ
+  const isG1Sign = signType.startsWith('G');
+  const signWidth = isG1Sign ? Math.round(fullWidth) : Math.round(fullWidth - 2);
+  const signHeight = isG1Sign ? Math.round(fullHeight) : Math.round(fullHeight - 2);
 
   const serializer = new XMLSerializer();
   let source = serializer.serializeToString(svgNode);
@@ -57,7 +68,6 @@ export const exportSVG = async (signType, params) => {
 
   const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
   
-  // --- ЗМІНА ТУТ ---
   const effectiveSignType = getEffectiveSignType(signType, params);
   const filename = `${effectiveSignType}(${signWidth}x${signHeight}).svg`;
   saveAs(blob, filename);
@@ -74,8 +84,11 @@ export const exportPNG = async (signType, params) => {
 
   const fullWidth = parseFloat(svgNode.getAttribute("width"));
   const fullHeight = parseFloat(svgNode.getAttribute("height"));
-  const signWidth = Math.round(fullWidth - 2);
-  const signHeight = Math.round(fullHeight - 2);
+
+  // 2. ОНОВЛЕНО РОЗРАХУНОК РОЗМІРУ
+  const isG1Sign = signType.startsWith('G');
+  const signWidth = isG1Sign ? Math.round(fullWidth) : Math.round(fullWidth - 2);
+  const signHeight = isG1Sign ? Math.round(fullHeight) : Math.round(fullHeight - 2);
 
   const serializer = new XMLSerializer();
   let source = serializer.serializeToString(svgNode);
@@ -98,7 +111,6 @@ export const exportPNG = async (signType, params) => {
 
     URL.revokeObjectURL(url);
     canvas.toBlob((pngBlob) => {
-      // --- ЗМІНА ТУТ ---
       const effectiveSignType = getEffectiveSignType(signType, params);
       const filename = `${effectiveSignType}(${signWidth}x${signHeight}).png`;
       saveAs(pngBlob, filename);
@@ -120,8 +132,11 @@ export const exportPDF = async (signType, params) => {
 
   const fullWidth = parseFloat(svgNode.getAttribute("width"));
   const fullHeight = parseFloat(svgNode.getAttribute("height"));
-  const signWidth = Math.round(fullWidth - 2);
-  const signHeight = Math.round(fullHeight - 2);
+
+  // 2. ОНОВЛЕНО РОЗРАХУНОК РОЗМІРУ
+  const isG1Sign = signType.startsWith('G');
+  const signWidth = isG1Sign ? Math.round(fullWidth) : Math.round(fullWidth - 2);
+  const signHeight = isG1Sign ? Math.round(fullHeight) : Math.round(fullHeight - 2);
 
   const serializer = new XMLSerializer();
   let source = serializer.serializeToString(svgNode);
@@ -150,7 +165,6 @@ export const exportPDF = async (signType, params) => {
 
     pdf.addImage(imgData, 'PNG', 0, 0, signWidth, signHeight);
     
-    // --- ЗМІНА ТУТ ---
     const effectiveSignType = getEffectiveSignType(signType, params);
     const filename = `${effectiveSignType}(${signWidth}x${signHeight}).pdf`;
     pdf.save(filename);
