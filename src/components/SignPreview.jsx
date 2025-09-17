@@ -86,27 +86,23 @@ function SignPreview({ signType, params, setSignSize, mode = "preview" }) {
 
       return (
         <div className="flex flex-col items-center w-full">
-          {/* ЗМІНА 1: Контейнер 300px, вирівнювання по верху (items-start) */}
-          <div className="w-full flex items-start justify-center" style={{ height: '200px' }}>
-            <div style={{
-              width: `${originalSize.width * g1ScaleFactor}px`,
-              height: `${originalSize.height * g1ScaleFactor}px`,
-              filter: "drop-shadow(0 0 10px rgba(0,0,0,0.3))",
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-              <div ref={wrapperRef} style={{ transform: `scale(${g1ScaleFactor})`, transformOrigin: "center center" }}>
-                {g1Sign}
-              </div>
+          {/* ЗМІНА ТУТ: Повернено сірий квадрат 150х150 з тінню */}
+          <div style={{
+            width: '177px',
+            height: '177px',
+            backgroundColor: '#808080',
+            filter: "drop-shadow(0 0 10px rgba(0,0,0,0.3))",
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+            <div ref={wrapperRef} style={{ transform: `scale(${g1ScaleFactor})`, transformOrigin: "center center" }}>
+              {g1Sign}
             </div>
           </div>
           
           <div className="w-full mt-4">
-            {/* ЗМІНА 2: Оновлено стиль заголовка та додано відступ */}
-            <h2 className="text-[16px] font-bold pt-4 text-left mb-2">
-              Приклад візуалізації ГМО на розмітці:
-            </h2>
+            <hr className="my-2 border-gray-200 mb-8" />
             <RoadMarkingPreview
               markingType={params.markingType}
               g1Sign={g1Sign}

@@ -83,11 +83,12 @@ function G1SettingsPanel({ params, setParams, signSize }) {
             inputClasses={inputStyles}
           />
         </FormRow>
-
+      </div>
+      <div className="space-y-2 mt-10 ">
         <h2 className="text-[16px] font-bold pt-4 text-left">
-            Візуалізація на розмітці:
+            Приклад застосування з розміткою:
         </h2>
-        
+        <hr className="my-2 border-gray-200" />
         <FormRow label="Тип розмітки:">
             <Select
                 value={params.markingType}
