@@ -193,17 +193,17 @@ case 'Розмітка5': {
         return (
           <svg width={canvasWidth} height={canvasHeight} viewBox={`0 0 ${canvasWidth} ${canvasHeight}`} xmlns="http://www.w3.org/2000/svg">
             <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
+            {/* <rect x="0" y={100-22 } width="400" height="1" fill="black"/> */}
             <g transform="translate(126.25, 0)">
               <g transform={`translate(0, ${(canvasHeight - gBicycle2.height) / 2})`}><path d={gBicycle2.d} fill={pathColor} fillRule="evenodd"/></g>
               {/* Перший напрямок */}
-              <g transform={`translate(${22.5 + gBicycle2.width + finalRotatedG1Width}, ${42.5-finalRotatedG1Height})`}><g transform={`scale(${g1Scale}) rotate(90)`}>{g1Sign}</g></g>
-              {showArrow && arrowToRender && <g transform={`translate(${31.5 + gBicycle2.width + finalRotatedG1Width}, ${lst1[arrowType]})`}><path d={arrowToRender.d} fill={pathColor} /></g>}
+              <g transform={`translate(${22.5 + gBicycle2.width + finalRotatedG1Width}, ${42.5-finalRotatedG1Height+3})`}><g transform={`scale(${g1Scale}) rotate(90)`}>{g1Sign}</g></g>
+              {showArrow && arrowToRender && <g transform={`translate(${31.5 + gBicycle2.width + finalRotatedG1Width}, ${lst1[arrowType]+3})`}><path d={arrowToRender.d} fill={pathColor} /></g>}
 
               {/* Другий напрямок */}
-              <g transform={`translate(${22.5 + gBicycle2.width + finalRotatedG1Width}, ${56.5})`}><g transform={`scale(${g1Scale}) rotate(90)`}>{secondG1Sign}</g></g>
-              {showSecondArrow && secondArrowToRender && <g transform={`translate(${31.5 + gBicycle2.width + finalRotatedG1Width}, ${lst2[secondArrowType]})`}><path d={secondArrowToRender.d} fill={pathColor} /></g>}
+              <g transform={`translate(${22.5 + gBicycle2.width + finalRotatedG1Width}, ${56.5-1})`}><g transform={`scale(${g1Scale}) rotate(90)`}>{secondG1Sign}</g></g>
+              {showSecondArrow && secondArrowToRender && <g transform={`translate(${31.5 + gBicycle2.width + finalRotatedG1Width}, ${lst2[secondArrowType]-1})`}><path d={secondArrowToRender.d} fill={pathColor} /></g>}
             </g>
-            {/* <rect x="0" y={56.5} width="400" height="1" fill="red"/> */}
           </svg>
         );
       } else if (showArrow) {

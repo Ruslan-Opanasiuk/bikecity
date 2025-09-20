@@ -64,11 +64,11 @@ function G1SettingsPanel({ params, setParams, signSize }) {
   // Створюємо різні списки опцій для стрілок
   const allDirectionOptions = [
     { value: 'none', label: 'Немає', icon: null },
-    { value: 'arrowStraight', label: 'Стрілка1', icon: PathConfigs.arrowStraight },
-    { value: 'arrowSide', label: 'Стрілка2', icon: PathConfigs.arrowSide },
-    { value: 'arrowStraightSide', label: 'Стрілка3', icon: PathConfigs.arrowStraightSide },
-    { value: 'arrowSideR', label: 'Стрілка4', icon: PathConfigs.arrowSideR },
-    { value: 'arrowStraightSideR', label: 'Стрілка5', icon: PathConfigs.arrowStraightSideR },
+    { value: 'arrowStraight', label: 'Прямо', icon: PathConfigs.arrowStraight },
+    { value: 'arrowSide', label: 'Ліворуч', icon: PathConfigs.arrowSide },
+    { value: 'arrowStraightSide', label: 'Прямо і ліворуч', icon: PathConfigs.arrowStraightSide },
+    { value: 'arrowSideR', label: 'Праворуч', icon: PathConfigs.arrowSideR },
+    { value: 'arrowStraightSideR', label: 'Прямо і праворуч', icon: PathConfigs.arrowStraightSideR },
   ];
   const firstDirectionOptions = allDirectionOptions.filter(opt => !opt.value.includes('R'));
   const secondDirectionOptions = allDirectionOptions.filter(opt => !['arrowSide', 'arrowStraightSide'].includes(opt.value));
