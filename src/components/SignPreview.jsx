@@ -86,28 +86,31 @@ function SignPreview({ signType, params, setSignSize, mode = "preview" }) {
 
       return (
         <div className="flex flex-col items-center w-full">
-          {/* ЗМІНА ТУТ: Повернено сірий квадрат 150х150 з тінню */}
-          <div style={{
-            width: '177px',
-            height: '177px',
-            backgroundColor: '#808080',
-            filter: "drop-shadow(0 0 10px rgba(0,0,0,0.3))",
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}>
-            <div ref={wrapperRef} style={{ transform: `scale(${g1ScaleFactor})`, transformOrigin: "center center" }}>
-              {g1Sign}
+          <div className="w-full flex items-start justify-center" style={{ height: '177px' }}>
+            <div style={{
+              width: `${originalSize.width * g1ScaleFactor}px`,
+              height: `${originalSize.height * g1ScaleFactor}px`,
+              filter: "drop-shadow(0 0 10px rgba(0,0,0,0.3))",
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+              <div ref={wrapperRef} style={{ transform: `scale(${g1ScaleFactor})`, transformOrigin: "center center" }}>
+                {g1Sign}
+              </div>
             </div>
           </div>
           
-          <div className="w-full mt-4">
-            <hr className="my-2 border-gray-200 mb-8" />
-            <RoadMarkingPreview
-              markingType={params.markingType}
-              g1Sign={g1Sign}
-              g1Params={params}
-            />
+          {/* ЗМІНА ТУТ: Додано контейнери для центрування та обмеження ширини розмітки */}
+          <div className="w-full mt-4 flex justify-center">
+            <div className="w-full max-w-[400px]">
+              <hr className="my-2 border-gray-200 mb-8" />
+              <RoadMarkingPreview
+                markingType={params.markingType}
+                g1Sign={g1Sign}
+                g1Params={params}
+              />
+            </div>
           </div>
         </div>
       );
