@@ -21,7 +21,7 @@ import { getRouteBadgeGroupWidth } from "./components/svg/RouteBadgeGroup";
 const defaultG1Params = {
   numberType: 'national',
   routeNumber: '',
-  markingType: 'B.1'
+  markingType: 'Розмітка1',
 };
 
 const ribbonOrCircleIcons = new Set([

@@ -13,7 +13,7 @@ const roadUABold = opentype.parse(fontBuffer);
 
 function G1({ params }) {
   // --- 1. Визначення кольорів залежно від типу маршруту ---
-  const { numberType = 'local', routeNumber = '1' } = params;
+  const { numberType = 'national', routeNumber = '' } = params;
   let colors;
 
   switch (numberType) {
