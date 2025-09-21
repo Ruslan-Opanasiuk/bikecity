@@ -137,7 +137,7 @@ function G1SettingsPanel({ params, setParams, signSize }) {
                 id="showDimensions" 
                 className="sr-only peer" 
                 // Встановлюємо значення `true` за замовчуванням
-                checked={params.showDimensions ?? true} 
+                checked={params.showDimensions ?? false} 
                 onChange={(e) => handleParamChange('showDimensions', e.target.checked)} 
               />
               <div className="w-7 h-4 bg-gray-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:bg-blue-600"></div>
