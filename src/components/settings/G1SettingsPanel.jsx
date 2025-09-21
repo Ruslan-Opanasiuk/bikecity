@@ -129,6 +129,23 @@ function G1SettingsPanel({ params, setParams, signSize }) {
             </FormRow>
           </div>
         )}
+        <FormRow label="">
+          <label htmlFor="showDimensions" className="inline-flex items-center cursor-pointer gap-3">
+            <div className="relative">
+              <input 
+                type="checkbox" 
+                id="showDimensions" 
+                className="sr-only peer" 
+                // Встановлюємо значення `true` за замовчуванням
+                checked={params.showDimensions ?? true} 
+                onChange={(e) => handleParamChange('showDimensions', e.target.checked)} 
+              />
+              <div className="w-7 h-4 bg-gray-200 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:bg-blue-600"></div>
+              <div className="absolute left-0.5 top-0.5 bg-white border-gray-300 border rounded-full h-3 w-3 transition-transform peer-checked:translate-x-3"></div>
+            </div>
+            <span className="text-[13px] text-gray-700">Показати розміри</span>
+          </label>
+        </FormRow>
       </div>
     </div>
   );

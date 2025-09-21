@@ -49,7 +49,7 @@ function DimensionRuler({
             key={`dim-${index}`}
             x={centerX}
             y={centerY}
-            fontSize="10"
+            fontSize="8"
             fill="black"
             textAnchor="middle"
             dominantBaseline="middle"

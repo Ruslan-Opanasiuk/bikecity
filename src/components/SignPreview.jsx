@@ -80,40 +80,43 @@ function SignPreview({ signType, params, setSignSize, mode = "preview" }) {
   } else {
     // --- Логіка для режиму PREVIEW ---
 
-    if (signType === 'G1') {
-      const g1Sign = <G1 params={params} />;
-      const g1ScaleFactor = 0.2; 
+// SignPreview.jsx
 
-      return (
-        <div className="flex flex-col items-center w-full">
-          {/* ЗМІНА ТУТ: Повернено стилі для сірого квадрата */}
-          <div style={{
-            width: '177px',
-            height: '177px',
-            backgroundColor: '#808080',
-            filter: "drop-shadow(0 0 10px rgba(0,0,0,0.3))",
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}>
-            <div ref={wrapperRef} style={{ transform: `scale(${g1ScaleFactor})`, transformOrigin: "center center" }}>
-              {g1Sign}
-            </div>
-          </div>
-          
-          <div className="w-full mt-4 flex justify-center">
-            <div className="w-full max-w-[400px]">
-              <hr className="my-2 border-gray-200 mb-8" />
-              <RoadMarkingPreview
-                markingType={params.markingType}
-                g1Sign={g1Sign}
-                g1Params={params}
-              />
-            </div>
-          </div>
+if (signType === 'G1') {
+  const g1Sign = <G1 params={params} />;
+  const g1ScaleFactor = 0.2; 
+
+  return (
+    // ЗМІНА 1: Вирівнювання тепер адаптивне: зліва на моб, по центру на ПК
+    <div className="flex flex-col items-start lg:items-center">
+      {/* Квадрат для попереднього перегляду знака */}
+      <div style={{
+        width: '177px',
+        height: '177px',
+        backgroundColor: '#808080',
+        filter: "drop-shadow(0 0 10px rgba(0,0,0,0.3))",
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+        <div ref={wrapperRef} style={{ transform: `scale(${g1ScaleFactor})`, transformOrigin: "center center" }}>
+          {g1Sign}
         </div>
-      );
-    }
+      </div>
+      
+      {/* Контейнер для розмітки */}
+      {/* ЗМІНА 2: Прибираємо 'w-full', щоб блок не розтягувався */}
+      <div className="mt-4 max-w-[400px]">
+          <hr className="my-2 border-gray-200 mb-8" />
+          <RoadMarkingPreview
+            markingType={params.markingType}
+            g1Sign={g1Sign}
+            g1Params={params}
+          />
+      </div>
+    </div>
+  );
+}
     
     const sign = <Component params={params} />;
     return (
