@@ -21,7 +21,7 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
   const { 
     numberType = '', routeNumber = '', arrowType = 'none',
     isTwoDirections, secondNumberType, secondRouteNumber, secondArrowType,
-    showDimensions = true // Отримуємо статус повзунка, за замовчуванням true
+    showDimensions = false // Отримуємо статус повзунка, за замовчуванням true
   } = g1Params || {};
 
   const showSecondArrow = isTwoDirections && secondArrowType && secondArrowType !== 'none';
