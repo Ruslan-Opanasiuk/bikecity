@@ -21,7 +21,7 @@ import { getRouteBadgeGroupWidth } from "./components/svg/RouteBadgeGroup";
 const defaultG1Params = {
   numberType: 'national',
   routeNumber: '',
-  markingType: 'Розмітка1',
+  markingType: 'Спільна смуга вело та маршрутного транспорту',
 };
 
 const ribbonOrCircleIcons = new Set([

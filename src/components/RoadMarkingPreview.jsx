@@ -54,8 +54,8 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
   };
   const lst1 = {
     arrowStraight: 42.5-finalRotatedG1Height/2-10,
-    arrowSide: 42.5-25,
-    arrowStraightSide: 42.5-finalRotatedG1Height/2-22,
+    arrowSide: 42.5-finalRotatedG1Height/2-22,
+    arrowStraightSide: 42-finalRotatedG1Height/2-22,
   };
 
 
@@ -81,7 +81,7 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
 
   const lst2 = {
     arrowStraight: 56.5+finalRotatedSecondG1Height/2-10,
-    arrowSideR: 56.5,
+    arrowSideR: 56.5+finalRotatedSecondG1Height/2-3,
     arrowStraightSideR: 56.5+finalRotatedSecondG1Height/2-9.5,
   };
 
@@ -89,7 +89,7 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
 
   switch (markingType) {
     
-    case 'Розмітка1': {
+    case 'Спільна смуга вело та маршрутного транспорту': {
 
       const xCoords = [0, 100, 130, 130+finalRotatedG1Width, 160+finalRotatedG1Width,  310+finalRotatedG1Width]; 
       const calculationResult = finalRotatedG1Width * 2 / 100;
@@ -140,7 +140,7 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
       );
     }
       
-    case 'Розмітка2': {
+    case 'Велопішохідна доріжка / зона': {
       const xCoords = [0, finalRotatedG1Width, finalRotatedG1Width+22.5, finalRotatedG1Width+142.5]; 
       const calculationResult = finalRotatedG1Width * 2 / 100;
       const dimensionLabels = [calculationResult.toFixed(2), '0.45', '2.40'];
@@ -170,7 +170,7 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
       );
     }
 
-    case 'Розмітка3': {
+    case 'Велосипедний коридор': {
       const xCoords = [0, 172.5, 195, 195+finalRotatedG1Width]; 
       const calculationResult = finalRotatedG1Width * 2 / 100;
       const dimensionLabels = ['3.45', '0.45', calculationResult.toFixed(2)];
@@ -221,7 +221,7 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
       );
     }
 
-    case 'Розмітка4': {
+    case 'Велосипедна смуга': {
       const xCoords = [0, 100, 122.5, 122.5+finalRotatedG1Width]; 
       const calculationResult = finalRotatedG1Width * 2 / 100;
       const dimensionLabels = ['2.00', '0.45', calculationResult.toFixed(2)];
@@ -270,7 +270,7 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
       );    
     }
 
-case 'Розмітка5': {
+case 'Велосипедна доріжка': {
       // Створюємо другий знак G1, якщо потрібно
       const xCoords = [0, 50, 72.5, 72.5+finalRotatedG1Width]; 
       const calculationResult = finalRotatedG1Width * 2 / 100;
@@ -308,6 +308,7 @@ case 'Розмітка5': {
                 </g>
               )}
             </g>
+            {/* <rect x="0" y={55+finalRotatedSecondG1Height/2} width={400} height={1} fill="red" /> */}
           </svg>
         );
       } else if (showArrow) {

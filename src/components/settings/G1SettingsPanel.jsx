@@ -12,16 +12,21 @@ import {
 
 function G1SettingsPanel({ params, setParams, signSize }) {
   // --- Обробники подій ---
-  const handleParamChange = (param, value) => setParams(prev => ({ ...prev, [param]: value }));
+
+  const handleParamChange = (param, value) => {
+    setParams(prevParams => ({ ...prevParams, [param]: value }));
+  };
+
   const handleRouteNumberChange = (param, e) => {
     let value = e.target.value.replace(/\D/g, "");
     if (value.startsWith("0")) value = value.slice(1);
     value = value.slice(0, 2);
-    setParams(prev => ({ ...prev, [param]: value }));
+    setParams(prevParams => ({ ...prevParams, [param]: value }));
   };
+
   const handleMarkingTypeChange = (value) => {
-    setParams(prev => {
-      const newParams = { ...prev, markingType: value, arrowType: 'none', isTwoDirections: false };
+    setParams(prevParams => {
+      const newParams = { ...prevParams, markingType: value, arrowType: 'none', isTwoDirections: false };
       delete newParams.secondNumberType;
       delete newParams.secondRouteNumber;
       delete newParams.secondArrowType;
@@ -32,14 +37,15 @@ function G1SettingsPanel({ params, setParams, signSize }) {
   const handleTwoDirectionsToggle = (e) => {
     const isChecked = e.target.checked;
     const newParams = { ...params, isTwoDirections: isChecked };
-
-    // ЗМІНА ТУТ: При ввімкненні повзунка одразу встановлюємо значення за замовчуванням
+    
     if (isChecked) {
-      newParams.secondNumberType = 'national'; // Ваш дефолт
-      newParams.secondRouteNumber = '';        // Порожній номер для початку
+      if (newParams.arrowType === 'arrowSideR' || newParams.arrowType === 'arrowStraightSideR') {
+        newParams.arrowType = 'arrowStraight';
+      }
+      newParams.secondNumberType = 'national';
+      newParams.secondRouteNumber = '';
       newParams.secondArrowType = 'none';
     } else {
-      // При вимкненні - очищуємо
       delete newParams.secondNumberType;
       delete newParams.secondRouteNumber;
       delete newParams.secondArrowType;
@@ -47,21 +53,45 @@ function G1SettingsPanel({ params, setParams, signSize }) {
     setParams(newParams);
   };
 
+  // Нові спеціалізовані обробники для синхронізації
+  const handleFirstNumberTypeChange = (value) => {
+    const newParams = { ...params, numberType: value };
+    if (params.isTwoDirections) {
+      if (value === 'temporary') {
+        newParams.secondNumberType = 'temporary';
+      } else if (params.numberType === 'temporary' && value !== 'temporary') {
+        newParams.secondNumberType = 'local';
+      }
+    }
+    setParams(newParams);
+  };
+
+  const handleSecondNumberTypeChange = (value) => {
+    const newParams = { ...params, secondNumberType: value };
+    if (value === 'temporary') {
+      newParams.numberType = 'temporary';
+    } else if (params.secondNumberType === 'temporary' && value !== 'temporary') {
+      newParams.numberType = 'local';
+    }
+    setParams(newParams);
+  };
+
   // --- Дані та логіка ---
+
   const g1RouteLevelOptions = [
     { value: 'national', label: 'Національний' },
     { value: 'regional', label: 'Регіональний' },
     { value: 'local', label: 'Локальний' },
     { value: 'temporary', label: 'Тимчасовий' },
   ];
+  
   const displayTitle = useMemo(() => {
     const titleMap = { national: 'Г.1', regional: 'Г.2', local: 'Г.3', temporary: 'Г.4' };
     const signIdentifier = titleMap[params.numberType] || 'Г.1';
     return `Налаштування ${signIdentifier}:`;
   }, [params.numberType]);
-  const markingOptions = ['Розмітка1', 'Розмітка2', 'Розмітка3', 'Розмітка4', 'Розмітка5'];
 
-  // Створюємо різні списки опцій для стрілок
+  const markingOptions = ['Спільна смуга вело та маршрутного транспорту', 'Велопішохідна доріжка / зона', 'Велосипедний коридор', 'Велосипедна смуга', 'Велосипедна доріжка'];
   const allDirectionOptions = [
     { value: 'none', label: 'Немає', icon: null },
     { value: 'arrowStraight', label: 'Прямо', icon: PathConfigs.arrowStraight },
@@ -70,26 +100,35 @@ function G1SettingsPanel({ params, setParams, signSize }) {
     { value: 'arrowSideR', label: 'Праворуч', icon: PathConfigs.arrowSideR },
     { value: 'arrowStraightSideR', label: 'Прямо і праворуч', icon: PathConfigs.arrowStraightSideR },
   ];
+  
   const firstDirectionOptions = allDirectionOptions.filter(opt => !opt.value.includes('R'));
   const secondDirectionOptions = allDirectionOptions.filter(opt => !['arrowSide', 'arrowStraightSide'].includes(opt.value));
   
   const inputStyles = "w-full lg:w-[250px] text-[13px] text-gray-900 font-normal placeholder:text-gray-500 [&[data-placeholder]]:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 data-[state=open]:ring-2 data-[state=open]:ring-blue-500";
-  const markingsWithDirection = ['Розмітка3', 'Розмітка4', 'Розмітка5'];
+  const markingsWithDirection = ['Велосипедний коридор', 'Велосипедна смуга', 'Велосипедна доріжка'];
   const showDirectionSelect = markingsWithDirection.includes(params.markingType);
-  const showTwoDirectionsToggle = params.markingType === 'Розмітка5';
+  const showTwoDirectionsToggle = params.markingType === 'Велосипедна доріжка';
 
-  // Визначаємо, який набір опцій використовувати для першої стрілки
-  const optionsForFirstArrow = showTwoDirectionsToggle && params.isTwoDirections
-    ? firstDirectionOptions
-    : allDirectionOptions;
+  const optionsForFirstArrow = showTwoDirectionsToggle && params.isTwoDirections ? firstDirectionOptions : allDirectionOptions;
 
   return (
     <div className="p-0 w-full">
       <h2 className="text-[16px] font-bold mb-0 text-left">{displayTitle}<span className="text-[15px] font-normal ml-1">Горизонтальне ВМО</span></h2>
       {signSize && <div className="flex justify-between items-center mb-8"><p className="text-[14px] text-gray-500">розмір знаку: <span className="text-black">{Math.round(signSize.width)}x{Math.round(signSize.height)} мм</span></p></div>}
+      
       <div className="space-y-2">
-        <FormRow label="Рівень і номер:"><VeloRouteInputGroup routeType={params.numberType} onRouteTypeChange={(val) => handleParamChange('numberType', val)} routeNumber={params.routeNumber} onRouteNumberChange={(e) => handleRouteNumberChange('routeNumber', e)} levelOptions={g1RouteLevelOptions} inputClasses={inputStyles} /></FormRow>
+        <FormRow label="Рівень і номер:">
+          <VeloRouteInputGroup 
+            routeType={params.numberType} 
+            onRouteTypeChange={handleFirstNumberTypeChange} 
+            routeNumber={params.routeNumber} 
+            onRouteNumberChange={(e) => handleRouteNumberChange('routeNumber', e)} 
+            levelOptions={g1RouteLevelOptions} 
+            inputClasses={inputStyles} 
+          />
+        </FormRow>
       </div>
+
       <div className="space-y-2 mt-10 ">
         <h2 className="text-[16px] font-bold pt-4 text-left">Приклад застосування з розміткою:</h2>
         <hr className="my-2 border-gray-200" />
@@ -116,7 +155,16 @@ function G1SettingsPanel({ params, setParams, signSize }) {
         )}
         {showTwoDirectionsToggle && params.isTwoDirections && (
           <div className="space-y-2 pt-2">
-            <FormRow label="Рівень і номер 2:"><VeloRouteInputGroup routeType={params.secondNumberType} onRouteTypeChange={(val) => handleParamChange('secondNumberType', val)} routeNumber={params.secondRouteNumber} onRouteNumberChange={(e) => handleRouteNumberChange('secondRouteNumber', e)} levelOptions={g1RouteLevelOptions} inputClasses={inputStyles} /></FormRow>
+            <FormRow label="Рівень і номер 2:">
+              <VeloRouteInputGroup 
+                routeType={params.secondNumberType} 
+                onRouteTypeChange={handleSecondNumberTypeChange} 
+                routeNumber={params.secondRouteNumber} 
+                onRouteNumberChange={(e) => handleRouteNumberChange('secondRouteNumber', e)} 
+                levelOptions={g1RouteLevelOptions} 
+                inputClasses={inputStyles} 
+              />
+            </FormRow>
             <FormRow label="Напрямок 2:">
               <Select value={params.secondArrowType || 'none'} onValueChange={(val) => handleParamChange('secondArrowType', val)}>
                 <SelectTrigger className={inputStyles}><SelectValue /></SelectTrigger>
@@ -136,7 +184,6 @@ function G1SettingsPanel({ params, setParams, signSize }) {
                 type="checkbox" 
                 id="showDimensions" 
                 className="sr-only peer" 
-                // Встановлюємо значення `true` за замовчуванням
                 checked={params.showDimensions ?? false} 
                 onChange={(e) => handleParamChange('showDimensions', e.target.checked)} 
               />
