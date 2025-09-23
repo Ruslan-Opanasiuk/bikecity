@@ -9,7 +9,7 @@ function ExportMarkingBlock({ signType, params, exportSVG, exportPNG, exportPDF 
       </h2>
 
       {/* роздільна лінія */}
-      <hr className="my-2 border-gray-200 w-48" />
+      <hr className="my-2 border-gray-200 w-full" />
 
       <div className="flex gap-2">
         <button onClick={() => exportSVG(signType, params)} className={buttonStyles}>
