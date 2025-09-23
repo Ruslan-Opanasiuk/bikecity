@@ -58,7 +58,6 @@ export const renderForExport = async (signType, params, mode = "sign") => {
     }, 200);
   });
 };// ... решта імпортів лишаємо без змін ...
-
 // ------------------------------------------------------------
 // 3. Експорт SVG
 // ------------------------------------------------------------
@@ -66,8 +65,13 @@ export const exportSVG = async (signType, params, mode = "sign") => {
   const { svgNode, root, container } = await renderForExport(signType, params, mode);
   if (!svgNode) return;
 
-  const fullWidth = parseFloat(svgNode.getAttribute("width"));
-  const fullHeight = parseFloat(svgNode.getAttribute("height"));
+  let fullWidth = parseFloat(svgNode.getAttribute("width"));
+  let fullHeight = parseFloat(svgNode.getAttribute("height"));
+
+  // --- Обрізання області для G1 ---
+  if (signType === "G1" && mode === "marking") {
+    fullHeight = params.showDimensions ? 125 : 100;
+  }
 
   // масштаб 0.4 мм/px тільки для розмітки
   const targetWidthMm = mode === "marking" ? fullWidth * 0.4 : fullWidth;
@@ -95,7 +99,6 @@ export const exportSVG = async (signType, params, mode = "sign") => {
 
   const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
 
-  // --- формуємо назву ---
   let filename;
   if (mode === "marking") {
     filename = `${params.markingType}.svg`;
@@ -124,8 +127,13 @@ export const exportPNG = async (signType, params, mode = "sign") => {
   const { svgNode, root, container } = await renderForExport(signType, params, mode);
   if (!svgNode) return;
 
-  const fullWidth = parseFloat(svgNode.getAttribute("width"));
-  const fullHeight = parseFloat(svgNode.getAttribute("height"));
+  let fullWidth = parseFloat(svgNode.getAttribute("width"));
+  let fullHeight = parseFloat(svgNode.getAttribute("height"));
+
+  // --- Обрізання області для G1 ---
+  if (signType === "G1" && mode === "marking") {
+    fullHeight = params.showDimensions ? 125 : 100;
+  }
 
   const targetWidthMm = mode === "marking" ? fullWidth * 0.4 : fullWidth;
   const targetHeightMm = mode === "marking" ? fullHeight * 0.4 : fullHeight;
@@ -184,8 +192,13 @@ export const exportPDF = async (signType, params, mode = "sign") => {
   const { svgNode, root, container } = await renderForExport(signType, params, mode);
   if (!svgNode) return;
 
-  const fullWidth = parseFloat(svgNode.getAttribute("width"));
-  const fullHeight = parseFloat(svgNode.getAttribute("height"));
+  let fullWidth = parseFloat(svgNode.getAttribute("width"));
+  let fullHeight = parseFloat(svgNode.getAttribute("height"));
+
+  // --- Обрізання області для G1 ---
+  if (signType === "G1" && mode === "marking") {
+    fullHeight = params.showDimensions ? 125 : 100;
+  }
 
   const targetWidthMm = mode === "marking" ? fullWidth * 0.4 : fullWidth;
   const targetHeightMm = mode === "marking" ? fullHeight * 0.4 : fullHeight;
