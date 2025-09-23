@@ -16,6 +16,8 @@
   "author": "opanasiukruslan2003@email.com",
   "build": {
     "appId": "com.opanasiukruslan.bikecity_constructor",
+    "productName": "Bikecity Constructor",
+    "icon": "build/icon.png",
     "files": [
       "dist/**/*",
       "main.js",
