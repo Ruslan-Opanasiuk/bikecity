@@ -21,7 +21,7 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
   const { 
     numberType = '', routeNumber = '', arrowType = 'none',
     isTwoDirections, secondNumberType, secondRouteNumber, secondArrowType,
-    showDimensions = false // Отримуємо статус повзунка, за замовчуванням true
+    showDimensions = false
   } = g1Params || {};
 
   const showSecondArrow = isTwoDirections && secondArrowType && secondArrowType !== 'none';
@@ -176,7 +176,41 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
 
       const xCoords2 = [0, 172.5, 195, 195+finalRotatedG1Width, 208+finalRotatedG1Width, 257+finalRotatedG1Width]; 
       const dimensionLabels2 = ['3.45', '0.45', calculationResult.toFixed(2), '0.20', '1.10'];
-      return showArrow ? (
+      
+      const secondG1Sign = isTwoDirections 
+        ? <G1 params={{ numberType: secondNumberType, routeNumber: secondRouteNumber }} /> 
+        : null;
+
+      if (isTwoDirections) { 
+      return (
+        // Варіант зі стрілкою (старий B.4)
+        <svg width={canvasWidth} height={125} xmlns="http://www.w3.org/2000/svg">
+          <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
+          <g transform="translate(55, 0)">
+            <g transform={`translate(0, ${(canvasHeight - chevron.height) / 2})`}><path d={chevron.d} fill={pathColor} fillRule="evenodd"/></g>
+            <g transform={`translate(${9 + chevron.width}, ${(canvasHeight - gBicycle1.height) / 2})`}><path d={gBicycle1.d} fill={pathColor} fillRule="evenodd"/></g>
+            
+              <g transform={`translate(${31.5 + chevron.width + gBicycle1.width + finalRotatedG1Width}, ${42.5-finalRotatedG1Height+3})`}><g transform={`scale(${g1Scale}) rotate(90)`}>{g1Sign}</g></g>
+              {showArrow && arrowToRender && <g transform={`translate(${41.5 + chevron.width + gBicycle1.width + finalRotatedG1Width}, ${lst1[arrowType]+3})`}><path d={arrowToRender.d} fill={pathColor} /></g>}
+
+              <g transform={`translate(${31.5 + chevron.width + gBicycle1.width + finalRotatedG1Width}, ${56.5-1})`}><g transform={`scale(${g1Scale}) rotate(90)`}>{secondG1Sign}</g></g>
+              {showSecondArrow && secondArrowToRender && <g transform={`translate(${41.5 + chevron.width + gBicycle1.width + finalRotatedG1Width}, ${lst2[secondArrowType]-1})`}><path d={secondArrowToRender.d} fill={pathColor} /></g>}
+            
+            
+            
+            {showDimensions && (
+              <g transform={`translate(0, ${canvasHeight+2})`}>
+                <DimensionRuler 
+                  lines={xCoords2} 
+                  dimensions={dimensionLabels2}
+                />
+              </g>
+            )}
+          </g>
+        </svg>
+      );
+      } else if (showArrow) {
+      return (
         // Варіант зі стрілкою (старий B.4)
         <svg width={canvasWidth} height={125} xmlns="http://www.w3.org/2000/svg">
           <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
@@ -199,7 +233,9 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
             )}
           </g>
         </svg>
-      ) : (
+      );
+      } else {
+      return (
         // Варіант без стрілки (старий B.3)
         <svg width={canvasWidth} height={125} xmlns="http://www.w3.org/2000/svg">
           <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
@@ -219,6 +255,7 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
         </svg>
       );
     }
+  }
 
     case 'Велосипедна смуга': {
       const xCoords = [0, 100, 122.5, 122.5+finalRotatedG1Width]; 
@@ -227,46 +264,81 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
 
       const xCoords2 = [0, 100, 122.5, 122.5+finalRotatedG1Width, 135.5+finalRotatedG1Width, 184.5+finalRotatedG1Width]; 
       const dimensionLabels2 = ['2.00', '0.45', calculationResult.toFixed(2), '0.20', '1.30'];
-      return showArrow ? (
-        // Варіант зі стрілкою (старий B.6)
-        <svg width={canvasWidth} height={125} xmlns="http://www.w3.org/2000/svg">
-          <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
-          <g transform="translate(91.25, 0)">
-            <g transform={`translate(0, ${(canvasHeight - gBicycle1.height) / 2})`}><path d={gBicycle1.d} fill={pathColor} fillRule="evenodd"/></g>
-            <g transform={`translate(${22.5 + gBicycle1.width + finalRotatedG1Width}, ${(canvasHeight - finalRotatedG1Height) / 2})`}><g transform={`scale(${g1Scale}) rotate(90)`}>{g1Sign}</g></g>
-            {arrowToRender && (
-              <g transform={`translate(${31.5 + gBicycle1.width + finalRotatedG1Width}, ${arrowYOffsets[arrowType]})`}>
-                <path d={arrowToRender.d} fill={pathColor} fillRule="evenodd"/>
-              </g>
-            )}
-            {showDimensions && (
-              <g transform={`translate(0, ${canvasHeight+2})`}>
-                <DimensionRuler 
-                  lines={xCoords2} 
-                  dimensions={dimensionLabels2}
-                />
-              </g>
-            )}
-          </g>
-        </svg>
-      ) : (
-        // Варіант без стрілки (старий B.5)
-        <svg width={canvasWidth} height={125} xmlns="http://www.w3.org/2000/svg">
-          <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
-          <g transform="translate(123.75, 0)">
-            <g transform={`translate(0, ${(canvasHeight - gBicycle1.height) / 2})`}><path d={gBicycle1.d} fill={pathColor} fillRule="evenodd"/></g>
-            <g transform={`translate(${22.5 + gBicycle1.width + finalRotatedG1Width}, ${(canvasHeight - finalRotatedG1Height) / 2})`}><g transform={`scale(${g1Scale}) rotate(90)`}>{g1Sign}</g></g>
-            {showDimensions && (
-              <g transform={`translate(0, ${canvasHeight+2})`}>
-                <DimensionRuler 
-                  lines={xCoords} 
-                  dimensions={dimensionLabels}
-                />
-              </g>
-            )}
-          </g>
-        </svg>
-      );    
+      
+      const secondG1Sign = isTwoDirections 
+        ? <G1 params={{ numberType: secondNumberType, routeNumber: secondRouteNumber }} /> 
+        : null;
+
+
+      if (isTwoDirections) { 
+        return (
+ 
+          <svg width={canvasWidth} height={125} xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
+            <g transform="translate(91.25, 0)">
+              <g transform={`translate(0, ${(canvasHeight - gBicycle1.height) / 2})`}><path d={gBicycle1.d} fill={pathColor} fillRule="evenodd"/></g>
+              
+              <g transform={`translate(${22.5 + gBicycle1.width + finalRotatedG1Width}, ${42.5-finalRotatedG1Height+3})`}><g transform={`scale(${g1Scale}) rotate(90)`}>{g1Sign}</g></g>
+              {showArrow && arrowToRender && <g transform={`translate(${31.5 + gBicycle1.width + finalRotatedG1Width}, ${lst1[arrowType]+3})`}><path d={arrowToRender.d} fill={pathColor} /></g>}
+
+              <g transform={`translate(${22.5 + gBicycle1.width + finalRotatedG1Width}, ${56.5-1})`}><g transform={`scale(${g1Scale}) rotate(90)`}>{secondG1Sign}</g></g>
+              {showSecondArrow && secondArrowToRender && <g transform={`translate(${31.5 + gBicycle1.width + finalRotatedG1Width}, ${lst2[secondArrowType]-1})`}><path d={secondArrowToRender.d} fill={pathColor} /></g>}
+              
+              {showDimensions && (
+                <g transform={`translate(0, ${canvasHeight+2})`}>
+                  <DimensionRuler 
+                    lines={xCoords2} 
+                    dimensions={dimensionLabels2}
+                  />
+                </g>
+              )}
+            </g>
+          </svg>
+        );
+      } else if (showArrow) {
+        return (
+          // Варіант зі стрілкою (старий B.6)
+          <svg width={canvasWidth} height={125} xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
+            <g transform="translate(91.25, 0)">
+              <g transform={`translate(0, ${(canvasHeight - gBicycle1.height) / 2})`}><path d={gBicycle1.d} fill={pathColor} fillRule="evenodd"/></g>
+              <g transform={`translate(${22.5 + gBicycle1.width + finalRotatedG1Width}, ${(canvasHeight - finalRotatedG1Height) / 2})`}><g transform={`scale(${g1Scale}) rotate(90)`}>{g1Sign}</g></g>
+              {arrowToRender && (
+                <g transform={`translate(${31.5 + gBicycle1.width + finalRotatedG1Width}, ${arrowYOffsets[arrowType]})`}>
+                  <path d={arrowToRender.d} fill={pathColor} fillRule="evenodd"/>
+                </g>
+              )}
+              {showDimensions && (
+                <g transform={`translate(0, ${canvasHeight+2})`}>
+                  <DimensionRuler 
+                    lines={xCoords2} 
+                    dimensions={dimensionLabels2}
+                  />
+                </g>
+              )}
+            </g>
+          </svg>
+        );
+      } else {
+        return(
+          // Варіант без стрілки (старий B.5)
+          <svg width={canvasWidth} height={125} xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
+            <g transform="translate(123.75, 0)">
+              <g transform={`translate(0, ${(canvasHeight - gBicycle1.height) / 2})`}><path d={gBicycle1.d} fill={pathColor} fillRule="evenodd"/></g>
+              <g transform={`translate(${22.5 + gBicycle1.width + finalRotatedG1Width}, ${(canvasHeight - finalRotatedG1Height) / 2})`}><g transform={`scale(${g1Scale}) rotate(90)`}>{g1Sign}</g></g>
+              {showDimensions && (
+                <g transform={`translate(0, ${canvasHeight+2})`}>
+                  <DimensionRuler 
+                    lines={xCoords} 
+                    dimensions={dimensionLabels}
+                  />
+                </g>
+              )}
+            </g>
+          </svg>
+        );    
+      }
     }
 
 case 'Велосипедна доріжка': {

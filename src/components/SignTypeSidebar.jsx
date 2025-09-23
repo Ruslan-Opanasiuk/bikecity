@@ -7,8 +7,8 @@ function SignTypeSidebar({ signType, setSignType }) {
 
   const formatSignType = (type) => {
     // 1. ЗМІНЕНО: Назва для G1 тепер "Г.1-Г.4"
-    if (type === 'G1') return 'Г.1-Г.4'; 
-    if (type === 'B4') return 'B.4-B.6';
+    if (type === 'G1') return 'Г.1 - Г.4'; 
+    if (type === 'B4') return 'B.4 - B.6';
     if (type.startsWith('B')) return `B.${type.slice(1)}`;
     return type;
   };
@@ -45,7 +45,6 @@ function SignTypeSidebar({ signType, setSignType }) {
   return (
     <aside className="w-full">
       <h2 className="text-[16px] font-bold mb-2">Вибір ВМО:</h2>
-      
       <div className="mb-0 last:mb-0">
         <h3 className="text-[14px] text-gray-500  mb-2">
           Вертикальне ВМО
@@ -57,7 +56,7 @@ function SignTypeSidebar({ signType, setSignType }) {
       </div>
 
       <div className="mb-6 last:mb-0">
-        <h3 className="text-[14px] text-gray-500 mb-2">
+        <h3 className="text-[14px] text-gray-500 mt-2 mb-0">
           Горизонтальне ВМО
         </h3>
         {/* 2. ДОДАНО: 'true' для відступу, як у "Таблички" та "Знаки" */}

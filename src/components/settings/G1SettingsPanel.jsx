@@ -34,24 +34,32 @@ function G1SettingsPanel({ params, setParams, signSize }) {
     });
   };
   
-  const handleTwoDirectionsToggle = (e) => {
-    const isChecked = e.target.checked;
-    const newParams = { ...params, isTwoDirections: isChecked };
-    
-    if (isChecked) {
-      if (newParams.arrowType === 'arrowSideR' || newParams.arrowType === 'arrowStraightSideR') {
-        newParams.arrowType = 'arrowStraight';
-      }
-      newParams.secondNumberType = 'national';
-      newParams.secondRouteNumber = '';
-      newParams.secondArrowType = 'none';
-    } else {
-      delete newParams.secondNumberType;
-      delete newParams.secondRouteNumber;
-      delete newParams.secondArrowType;
+const handleTwoDirectionsToggle = (e) => {
+  const isChecked = e.target.checked;
+  const newParams = { ...params, isTwoDirections: isChecked };
+
+  if (isChecked) {
+    if (newParams.arrowType === 'arrowSideR' || newParams.arrowType === 'arrowStraightSideR') {
+      newParams.arrowType = 'arrowStraight';
     }
-    setParams(newParams);
-  };
+
+    // 👇 тут замість 'national' ставимо залежність від першого напрямку
+    if (newParams.numberType === 'temporary') {
+      newParams.secondNumberType = 'temporary';
+    } else {
+      newParams.secondNumberType = 'national';
+    }
+
+    newParams.secondRouteNumber = '';
+    newParams.secondArrowType = 'none';
+  } else {
+    delete newParams.secondNumberType;
+    delete newParams.secondRouteNumber;
+    delete newParams.secondArrowType;
+  }
+  setParams(newParams);
+};
+
 
   // Нові спеціалізовані обробники для синхронізації
   const handleFirstNumberTypeChange = (value) => {
@@ -107,7 +115,12 @@ function G1SettingsPanel({ params, setParams, signSize }) {
   const inputStyles = "w-full lg:w-[250px] text-[13px] text-gray-900 font-normal placeholder:text-gray-500 [&[data-placeholder]]:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 data-[state=open]:ring-2 data-[state=open]:ring-blue-500";
   const markingsWithDirection = ['Велосипедний коридор', 'Велосипедна смуга', 'Велосипедна доріжка'];
   const showDirectionSelect = markingsWithDirection.includes(params.markingType);
-  const showTwoDirectionsToggle = params.markingType === 'Велосипедна доріжка';
+  const showTwoDirectionsToggle = [
+  "Велосипедний коридор",
+  "Велосипедна смуга",
+  "Велосипедна доріжка"
+].includes(params.markingType);
+
 
   const optionsForFirstArrow = showTwoDirectionsToggle && params.isTwoDirections ? firstDirectionOptions : allDirectionOptions;
 

@@ -1,5 +1,4 @@
 function ExportBlock({ signType, params, exportSVG, exportPNG, exportPDF }) {
-  // --- Зміни тут ---
   const buttonStyles =
     "w-[50px] h-9 flex items-center justify-center rounded-md border-2 border-blue-600 bg-white text-blue-600 text-[13px] font-semibold hover:bg-blue-600 hover:text-white transition-colors";
 
