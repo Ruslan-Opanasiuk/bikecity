@@ -6,7 +6,8 @@ import B1B7SettingsPanel from "./components/settings/B1B7SettingsPanel";
 import B4B7ItemsPanel from "./components/settings/B4B7ItemSettings";
 import G1SettingsPanel from "./components/settings/G1SettingsPanel";
 import ExportBlock from "./components/ExportBlock";
-import { exportSVG, exportPNG, exportPDF } from "./utils/exportHelpers";
+import ExportMarkingBlock from "./components/ExportMarkingBlock";
+import { exportSVG, exportPNG, exportPDF} from "./utils/exportHelpers";
 import PathConfigs from "./config/PathConfigs";
 
 import {
@@ -192,14 +193,27 @@ function App() {
         </div>
 
         <div className="p-4 order-4 lg:order-none">
-          <ExportBlock
-            signType={signType}
-            params={safeParams}
-            exportSVG={exportSVG}
-            exportPNG={exportPNG}
-            exportPDF={exportPDF}
-          />
+<ExportBlock
+  signType={signType}
+  params={safeParams}
+  exportSVG={exportSVG}
+  exportPNG={exportPNG}
+  exportPDF={exportPDF}
+/>
+
+{signType === "G1" && (
+  <ExportMarkingBlock
+    signType={signType}
+    params={safeParams}
+    exportSVG={(s, p) => exportSVG(s, p, "marking")}
+    exportPNG={(s, p) => exportPNG(s, p, "marking")}
+    exportPDF={(s, p) => exportPDF(s, p, "marking")}
+  />
+)}
+
+
         </div>
+        
       </main>
     </div>
   );

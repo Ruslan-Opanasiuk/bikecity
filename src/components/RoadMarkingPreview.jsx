@@ -97,9 +97,8 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
 
       return (
         <svg
-          width="100%"
+          width={canvasWidth}
           height={125} // Враховуємо місце для лінійки
-          viewBox={`0 0 ${canvasWidth} 125`}
           xmlns="http://www.w3.org/2000/svg"
         >
           {/* --- Основне полотно розмітки --- */}
@@ -145,7 +144,7 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
       const calculationResult = finalRotatedG1Width * 2 / 100;
       const dimensionLabels = [calculationResult.toFixed(2), '0.45', '2.40'];
       return (
-        <svg width="100%" height={125} viewBox={`0 0 ${canvasWidth} ${125}`} xmlns="http://www.w3.org/2000/svg">
+        <svg width={canvasWidth} height={125} xmlns="http://www.w3.org/2000/svg">
           <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
           <g transform="translate(113.75, 0)">
             <g transform={`translate(${finalRotatedG1Width}, ${(canvasHeight - finalRotatedG1Height) / 2})`}>
@@ -179,7 +178,7 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
       const dimensionLabels2 = ['3.45', '0.45', calculationResult.toFixed(2), '0.20', '1.10'];
       return showArrow ? (
         // Варіант зі стрілкою (старий B.4)
-        <svg width="100%" height={125} viewBox={`0 0 ${canvasWidth} ${125}`} xmlns="http://www.w3.org/2000/svg">
+        <svg width={canvasWidth} height={125} xmlns="http://www.w3.org/2000/svg">
           <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
           <g transform="translate(55, 0)">
             <g transform={`translate(0, ${(canvasHeight - chevron.height) / 2})`}><path d={chevron.d} fill={pathColor} fillRule="evenodd"/></g>
@@ -202,7 +201,7 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
         </svg>
       ) : (
         // Варіант без стрілки (старий B.3)
-        <svg width="100%" height={125} viewBox={`0 0 ${canvasWidth} ${125}`} xmlns="http://www.w3.org/2000/svg">
+        <svg width={canvasWidth} height={125} xmlns="http://www.w3.org/2000/svg">
           <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
           <g transform="translate(72.5, 0)">
             <g transform={`translate(0, ${(canvasHeight - chevron.height) / 2})`}><path d={chevron.d} fill={pathColor} fillRule="evenodd"/></g>
@@ -230,7 +229,7 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
       const dimensionLabels2 = ['2.00', '0.45', calculationResult.toFixed(2), '0.20', '1.30'];
       return showArrow ? (
         // Варіант зі стрілкою (старий B.6)
-        <svg width="100%" height={125} viewBox={`0 0 ${canvasWidth} ${125}`} xmlns="http://www.w3.org/2000/svg">
+        <svg width={canvasWidth} height={125} xmlns="http://www.w3.org/2000/svg">
           <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
           <g transform="translate(91.25, 0)">
             <g transform={`translate(0, ${(canvasHeight - gBicycle1.height) / 2})`}><path d={gBicycle1.d} fill={pathColor} fillRule="evenodd"/></g>
@@ -252,7 +251,7 @@ function RoadMarkingPreview({ markingType, g1Sign, g1Params }) {
         </svg>
       ) : (
         // Варіант без стрілки (старий B.5)
-        <svg width="100%" height={125} viewBox={`0 0 ${canvasWidth} ${125}`} xmlns="http://www.w3.org/2000/svg">
+        <svg width={canvasWidth} height={125} xmlns="http://www.w3.org/2000/svg">
           <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
           <g transform="translate(123.75, 0)">
             <g transform={`translate(0, ${(canvasHeight - gBicycle1.height) / 2})`}><path d={gBicycle1.d} fill={pathColor} fillRule="evenodd"/></g>
@@ -287,7 +286,7 @@ case 'Велосипедна доріжка': {
       if (isTwoDirections) {
         // --- ВИПАДОК 3: ДВА НАПРЯМКИ ---
         return (
-          <svg width="100%" height={125} viewBox={`0 0 ${canvasWidth} ${125}`} xmlns="http://www.w3.org/2000/svg">
+          <svg width={canvasWidth} height={125} xmlns="http://www.w3.org/2000/svg">
             <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
             <g transform="translate(126.25, 0)">
               <g transform={`translate(0, ${(canvasHeight - gBicycle2.height) / 2})`}><path d={gBicycle2.d} fill={pathColor} fillRule="evenodd"/></g>
@@ -314,7 +313,7 @@ case 'Велосипедна доріжка': {
       } else if (showArrow) {
         // --- ВИПАДОК 2: ОДИН НАПРЯМОК ЗІ СТРІЛКОЮ ---
         return (
-          <svg width="100%" height={125} viewBox={`0 0 ${canvasWidth} ${125}`} xmlns="http://www.w3.org/2000/svg">
+          <svg width={canvasWidth} height={125} xmlns="http://www.w3.org/2000/svg">
             <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
             <g transform="translate(126.25, 0)">
               <g transform={`translate(0, ${(canvasHeight - gBicycle2.height) / 2})`}><path d={gBicycle2.d} fill={pathColor} fillRule="evenodd"/></g>
@@ -334,7 +333,7 @@ case 'Велосипедна доріжка': {
       } else {
         // --- ВИПАДОК 1: ОДИН НАПРЯМОК БЕЗ СТРІЛКИ ---
         return (
-          <svg width="100%" height={125} viewBox={`0 0 ${canvasWidth} ${125}`} xmlns="http://www.w3.org/2000/svg">
+          <svg width={canvasWidth} height={125} xmlns="http://www.w3.org/2000/svg">
             <rect x="0" y="0" width={canvasWidth} height={canvasHeight} fill="#808080" />
             <g transform="translate(148.75, 0)">
               <g transform={`translate(0, ${(canvasHeight - gBicycle2.height) / 2})`}><path d={gBicycle2.d} fill={pathColor} fillRule="evenodd"/></g>
