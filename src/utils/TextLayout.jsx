@@ -45,6 +45,7 @@ import transliterate from "./transliterate";
       customEn,
       routeNumber,
       isUrbanCenter,
+      isOnlySymbol,
       numberType,
       forcedFontSize1,
       textX = 0,
@@ -68,7 +69,9 @@ import transliterate from "./transliterate";
       labelShortEn = entry.shortEn ?? "";
     }
 
-    const mainTextRaw = labelUa ? `${labelUa} ${subText}`.trim() : subText;
+const mainTextRaw = isOnlySymbol 
+      ? subText.trim() 
+      : (labelUa ? `${labelUa} ${subText}`.trim() : subText);
 
     // === [3.2] Формування англійського рядка (первинний варіант) ===
     let secondaryLineFull = "";
@@ -183,7 +186,9 @@ import transliterate from "./transliterate";
       measureText(line, `${fontSize1}px RoadUA-Bold`)
     );
     const maxTextWidth = Math.max(...measuredLines.map((m) => m.width));
-    const routeBadgeX = textX + maxTextWidth + 20;
+    const badgeGap = params.isB7 ? 13 : 15;
+
+    const routeBadgeX = textX + maxTextWidth + badgeGap;
 
     // === [3.6] Хвилі для іконки water ===
     const showWave = icon === "water";

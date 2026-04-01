@@ -55,6 +55,9 @@ function B7Item({
 
   const iconConfig = iconKey ? PathConfigs[iconKey] : null;
 
+  // Логіка для одночасного відображення мішені на лінії та іконки праворуч для населених пунктів
+  const isEffectivelyCityCentre = iconKey === "cityCentre" || (iconKey === "settlement" && params.isUrbanCenter);
+
   /**
    * Іконки, які РЕНДЕРЯТЬСЯ НА СТРІЧЦІ (на вертикалі, на лінії x≈95.5)
    * Тобто саме вони можуть "замінити" виколоте кільце.
@@ -69,7 +72,8 @@ function B7Item({
   const ribbonCircleIcons = new Set(["cityCentre", "interchange", "bicycleRoute"]);
 
   // Чи показувати кольорову "крапку" (внутрішнє заповнення) замість вибивки/кільця
-  const shouldHaveColoredDot = iconKey ? !ribbonCircleIcons.has(iconKey) : true;
+  // Якщо це ефективно мішень (cityCentre або settlement + isUrbanCenter), крапку не малюємо
+  const shouldHaveColoredDot = iconKey ? (!ribbonCircleIcons.has(iconKey) && !isEffectivelyCityCentre) : true;
 
   // --- Розрахунок SVG-шляхів для тексту (мемоізовано) ---
   const {
@@ -120,27 +124,28 @@ function B7Item({
   const intersectsBike = iconKey === "bicycleRoute" || hasExtraBikeRoute;
 
   // якщо є перетин з веломаршрутом — показуємо виколоте кільце,
-  // ОКРІМ випадку, коли є інша піктограма, що розташовується на стрічці (ribbonOnLineIcons)
-  const wantsBicycleRing = intersectsBike && !(iconKey && ribbonOnLineIcons.has(iconKey));
+  // ОКРІМ випадку, коли є інша піктограма, що розташовується на стрічці (або це ефективно мішень)
+  const wantsBicycleRing = intersectsBike && !(iconKey && (ribbonOnLineIcons.has(iconKey) || isEffectivelyCityCentre));
 
   const circleProps = useMemo(() => {
     let config = CircleConfigs["B7"];
     if (wantsBicycleRing) {
       config = CircleConfigs["B7bicycle"]; // «дірчасте» кільце
-    } else if (iconKey === "cityCentre") {
+    } else if (isEffectivelyCityCentre) { // Використовуємо нову умову
       config = CircleConfigs["B7citycentre"];
     } else if (iconKey === "interchange") {
       config = CircleConfigs["B7interchange"];
     }
 
+    // Додаємо isEffectivelyCityCentre в умову для тимчасових маршрутів
     const isSpecialTempCase =
-      isTemporaryRoute && (iconKey === "cityCentre" || iconKey === "interchange");
+      isTemporaryRoute && (isEffectivelyCityCentre || iconKey === "interchange");
 
     const finalInnerColor = isSpecialTempCase
       ? TEMP_COLOR
       : (wantsBicycleRing
           ? WHITE_COLOR // для кільця – вибивка всередині
-          : (shouldHaveColoredDot ? accentColor : WHITE_COLOR));
+          : (shouldHaveColoredDot ? accentColor : WHITE_COLOR)); // білий для мішені
 
     return {
       config,
@@ -157,6 +162,7 @@ function B7Item({
     isTemporaryRoute,
     wantsBicycleRing,
     iconBaseY,
+    isEffectivelyCityCentre, // Залежність
   ]);
 
   const MultiColorSignPreview = ({ config, size = 45 }) => (
@@ -263,11 +269,27 @@ function B7Item({
       })()}
 
       {/* Кругла іконка-маркер (міст не малюємо) */}
-      {( (iconKey && iconKey !== "bridge" && ribbonCircleIcons.has(iconKey)) || shouldHaveColoredDot ) ? (
+      {/* Використовуємо isEffectivelyCityCentre для відображення мішені */}
+      {( (iconKey && iconKey !== "bridge" && ribbonCircleIcons.has(iconKey)) || shouldHaveColoredDot || isEffectivelyCityCentre ) ? (
         iconKey === "bridge" ? null : <CircleRenderer {...circleProps} />
       ) : null}
 
-      {/* SVG-іконка всередині маркера */}
+      {/* ДОДАТКОВА КРАПКА МІШЕНІ ДЛЯ НАСЕЛЕНОГО ПУНКТУ + ЦЕНТР */}
+      {params.icon === "settlement" && params.isUrbanCenter && (() => {
+        const ccConfig = PathConfigs["cityCentre"];
+        const ccX = 95.5 - (ccConfig.width * ccConfig.scale2) / 2 + temporaryOffset;
+        return (
+          <g
+            transform={`translate(${ccX}, ${
+              iconBaseY - (ccConfig.height * ccConfig.scale2) / 2
+            }) scale(${ccConfig.scale2})`}
+          >
+            <path d={ccConfig.d} fill={BLACK_COLOR} fillRule="evenodd" />
+          </g>
+        );
+      })()}
+
+      {/* SVG-іконка всередині маркера (або праворуч для settlement) */}
       {iconConfig && (
         <g
           transform={`translate(${iconRenderX}, ${

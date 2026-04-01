@@ -8,6 +8,7 @@ const locationTerms = {
   "interchange": {
     "Естакада": { "ua": "ест.", "en": "flyover" },
     "Майдан": { "ua": "майд.", "en": "square" },
+    "Міст": { "ua": "м.", "en": "bridge" },
     "Площа": { "ua": "пл.", "en": "square" },
     "Шляхопровід": { "ua": "ш-д.", "en": "overpass" }
   },

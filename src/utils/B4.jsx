@@ -15,13 +15,13 @@ import { getRouteBadgeGroupWidth } from "../components/svg/RouteBadgeGroup";
 function calculateB4ItemLayout(params) {
   const xPadding = 40;
   const arrow = PathConfigs.smallArrow;
-  const DIAGONAL_ARROW_WIDTH = 55.4;
+  const DIAGONAL_ARROW_WIDTH = 58.4;
 
   const directionLayout = {
     left: { arrowX: xPadding + (arrow.height - arrow.width) / 2 },
     straight: { arrowX: xPadding },
     "straight-left": { arrowX: xPadding - 3 },
-    right: { arrowX: 560 - arrow.width - (arrow.height - arrow.width) / 2 },
+    right: { arrowX: 560 - arrow.width - (arrow.height - arrow.width) / 2},
     "straight-right": { arrowX: 560 + 3 - DIAGONAL_ARROW_WIDTH },
   };
 
@@ -42,7 +42,8 @@ function calculateB4ItemLayout(params) {
       "straight-left": DIAGONAL_ARROW_WIDTH,
     };
     const arrowVisualWidth = arrowWidthMap[params.direction] || 0;
-    textX = arrowX + arrowVisualWidth + 20;
+    const directionCorrection = params.direction === "left" ? -7 : 0;
+    textX = arrowX + arrowVisualWidth + 20 + directionCorrection;
   }
 
   if (icon) {
@@ -52,7 +53,7 @@ function calculateB4ItemLayout(params) {
   const badgeGroupWidth = getRouteBadgeGroupWidth(params);
 
   const arrowRightSpace = ["right", "straight-right"].includes(params.direction)
-    ? (params.direction === "right" ? arrow.height : DIAGONAL_ARROW_WIDTH) + 20
+    ? (params.direction === "right" ? arrow.height : DIAGONAL_ARROW_WIDTH) + 20 - 5
     : 0;
 
   const availableTextWidthMain = 520 - (textX - xPadding) - arrowRightSpace - badgeGroupWidth;

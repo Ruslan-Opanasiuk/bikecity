@@ -15,7 +15,7 @@ const roadUAMedium = opentype.parse(mediumBuf);
 const BASE_FONT_SIZE_PRIMARY = 38;
 const BASE_FONT_SIZE_SECONDARY = 20;
 const FONT_VISUAL_HEIGHT_COEFF = 96 / 76;
-const DIAGONAL_ARROW_WIDTH = 55.4;
+const DIAGONAL_ARROW_WIDTH = 58.4;
 
 function B4Item({
   params,
@@ -35,14 +35,15 @@ function B4Item({
   }
   const icon = iconKey && PathConfigs[iconKey];
 
-  // === ВИДАЛЕНО ВСЮ ЛОГІКУ РОЗРАХУНКУ ПОЗИЦІЙ ТА ШИРИН ===
-  // Тепер компонент просто використовує готові дані з `params`
+
 
   const {
     textX,
     availableTextWidthMain,
     availableTextWidthSecondary,
   } = params;
+
+
   
   const arrow = PathConfigs.smallArrow;
   const directionLayout = {
@@ -57,7 +58,19 @@ function B4Item({
   const rotation = layout.rotation || 0;
   const arrowX = layout.arrowX ?? 0;
   const arrowY = 75 - arrow.height / 2;
-  const iconX = 40 + (["left", "straight", "straight-left"].includes(params.direction) ? layout.arrowX - 40 + ({straight: arrow.width, left: arrow.height, "straight-left": DIAGONAL_ARROW_WIDTH}[params.direction] || 0) + 20 : 0);
+  const iconX = 40 + (
+  ["left", "straight", "straight-left"].includes(params.direction) 
+    ? (layout.arrowX - 40) + 
+      ({
+        straight: arrow.width, 
+        left: arrow.height, 
+        "straight-left": DIAGONAL_ARROW_WIDTH
+      }[params.direction] || 0) + 
+      20 + (params.direction === "left" ? -7 : 0) // <--- РЕМАРКА ТУТ
+    : 0
+);
+
+
 
   // === РОЗРАХУНОК ТЕКСТОВОГО ЛЕЯУТУ ===
   const {

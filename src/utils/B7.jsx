@@ -115,6 +115,7 @@ function B7({ params }) {
     // застосовуючи вирівняний textX та примусовий fontSize1
     const finalParams = {
       ...item,
+      isB7: true,
       ...(alignedTextXMap.has(i) && { textX: alignedTextXMap.get(i), alignedTextX: alignedTextXMap.get(i) }),
       ...(forcedFontSize1 && { forcedFontSize1 }),
     };

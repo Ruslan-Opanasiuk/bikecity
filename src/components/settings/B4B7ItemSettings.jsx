@@ -234,6 +234,11 @@ function B4B7ItemSettings({
     setParams({ ...params, customEn: e.target.value });
   };
 
+  const handleOnlySymbolToggle = (e) => {
+    clearAllOverflowMessages();
+    setParams({ ...params, isOnlySymbol: e.target.checked });
+  };
+
   const handleTemporaryRouteToggle = (e) => {
     clearAllOverflowMessages();
     const isChecked = e.target.checked;
@@ -270,6 +275,7 @@ function B4B7ItemSettings({
       mainText: "",
       subText: isCenterOrRoute ? "" : params.subText,
       isUrbanCenter: false,
+      isOnlySymbol: false,
       customUa: "",
       customEn: "",
       ...(isChangingFromBicycleToOther && { routeNumber: "" }),
@@ -648,7 +654,7 @@ function B4B7ItemSettings({
         </Select>
       </FormRow>
 
-      {params.icon === "streetNetwork" && (
+      {(params.icon === "streetNetwork" || params.icon === "settlement") && (
         <FormRow label="">
           <label
             htmlFor="isUrbanCenter"
@@ -666,7 +672,7 @@ function B4B7ItemSettings({
               <div className="absolute left-0.5 top-0.5 h-3 w-3 rounded-full border border-gray-300 bg-white transition-transform peer-checked:translate-x-3"></div>
             </div>
             <span className="text-[13px] text-gray-700">
-              Є центром населеного пункту
+              Є центром
             </span>
           </label>
         </FormRow>
@@ -718,13 +724,13 @@ function B4B7ItemSettings({
         </FormRow>
       )}
 
-      {!isBicycleRoute && shouldShowNameField && (
+{!isBicycleRoute && shouldShowNameField && (
         <>
           <FormRow label="Назва:">
             <Input
               value={params.subText || ""}
               onChange={handleSubTextChange}
-              placeholder="Ведіть українську назву"
+              placeholder="Введіть українську назву"
               className={inputClasses}
             />
           </FormRow>
@@ -737,6 +743,32 @@ function B4B7ItemSettings({
           )}
         </>
       )}
+
+      {/* === НОВИЙ ТУМБЛЕР "ЛИШЕ СИМВОЛ" === */}
+      {["port", "airport", "railStation", "busStation"].includes(params.icon) && (
+        <FormRow label="">
+          <label
+            htmlFor="isOnlySymbol"
+            className="inline-flex cursor-pointer items-center gap-3"
+          >
+            <div className="relative">
+              <input
+                type="checkbox"
+                id="isOnlySymbol"
+                className="peer sr-only"
+                checked={params.isOnlySymbol || false}
+                onChange={handleOnlySymbolToggle}
+              />
+              <div className="peer h-4 w-7 rounded-full bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:bg-blue-600"></div>
+              <div className="absolute left-0.5 top-0.5 h-3 w-3 rounded-full border border-gray-300 bg-white transition-transform peer-checked:translate-x-3"></div>
+            </div>
+            <span className="text-[13px] text-gray-700">
+              Лише символ
+            </span>
+          </label>
+        </FormRow>
+      )}
+      {/* ================================== */}
 
       {isB7 && (
         <FormRow label="Відстань (км):">
