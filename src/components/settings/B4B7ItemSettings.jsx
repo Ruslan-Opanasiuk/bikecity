@@ -654,7 +654,7 @@ function B4B7ItemSettings({
         </Select>
       </FormRow>
 
-      {(params.icon === "streetNetwork" || params.icon === "settlement") && (
+      {(params.icon === "streetNetwork" || (isB7 && params.icon === "settlement")) && (
         <FormRow label="">
           <label
             htmlFor="isUrbanCenter"
